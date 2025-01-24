@@ -37,7 +37,7 @@ const styleFunction = function (feature) {
 };
 
 const fetchData = async () => {
-    const response = await fetch('./Moscow.geojson');
+    const response = await fetch('./static/Moscow.geojson');
     const geoJson = await response.json();
 
 
