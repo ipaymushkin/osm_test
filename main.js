@@ -11,7 +11,7 @@ import {Point} from "ol/geom";
 import {Heatmap as HeatmapLayer} from 'ol/layer';
 import KML from 'ol/format/KML';
 import {getVectorContext} from 'ol/render';
-
+import {defaults as defaultInteractions} from 'ol/interaction';
 
 /**
  * функция для стилизации фич
@@ -85,6 +85,7 @@ const handleTile = (tile) => {
 }
 
 const fetchData = async () => {
+
     /**
      * скачивание геоджесона (для районов Москвы)
      * @type {Response}
@@ -142,8 +143,8 @@ const fetchData = async () => {
                 extractStyles: false,
             }),
         }),
-        blur: 200,
-        radius: 200,
+        blur: 100,
+        radius: 150,
         weight: (feature) => {
             const name = feature.get('name');
             const magnitude = parseFloat(name.substr(2));
@@ -154,7 +155,29 @@ const fetchData = async () => {
     /**
      * задание цвета для хитмапы
      */
-    heatmap.setGradient(['#ffffff', '#00ff00', '#0000ff'])
+    heatmap.setGradient(['#e1823e', '#f93519'])
+
+    /**
+     * создание хитмапы из kml файла
+     * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
+     */
+    const heatmap2 = new HeatmapLayer({
+        source: new VectorSource({
+            url: './static/HeatMap2.kml',
+            format: new KML({
+                extractStyles: false,
+            }),
+        }),
+        blur: 100,
+        radius: 150,
+        weight: (feature) => {
+            const name = feature.get('name');
+            const magnitude = parseFloat(name.substr(2));
+            return magnitude - 5;
+        },
+    });
+
+    heatmap2.setGradient(['#596fb8', '#821bf1'])
 
     /**
      * скачивание карты Москвы (общий полигон для Москвы без разбивки по районам)
@@ -208,6 +231,15 @@ const fetchData = async () => {
     });
 
     /**
+     * создание вью для карты
+     * @type {View}
+     */
+    const view = new View({
+        center: fromLonLat([37.618423, 55.751244]),
+        zoom: 11,
+    });
+
+    /**
      * создание карты
      * @type {Map}
      */
@@ -216,16 +248,23 @@ const fetchData = async () => {
         layers: [
             clipTile,
             heatmap,
+            heatmap2,
             baseTile,
             clipVectorLayer,
             baseVectorLayer,
         ],
-        view: new View({
-            center: fromLonLat([37.618423, 55.751244]),
-            zoom: 11,
-            minZoom: 11
-        }),
+        view,
+        controls: [],
+        interactions: defaultInteractions({
+            mouseWheelZoom: false
+        })
     });
+
+    /**
+     * переменная для хранения маркеров
+     * @type {*[]}
+     */
+    const markers = [];
 
     /**
      * добавление маркеров на карту
@@ -284,6 +323,7 @@ stroke-dashoffset="-25.12"
                     source: vectorSource,
                 });
 
+                markers.push(vectorLayer);
                 map.addLayer(vectorLayer);
             }
         }
@@ -305,15 +345,32 @@ stroke-dashoffset="-25.12"
     })
 
     /**
+     * селектор для кнопки назад
+     * @type {HTMLElement}
+     */
+    const backButton = document.getElementById('back_button');
+
+    /**
      * применение стилей + переход к нужному району на клик
      */
     map.on('click', (evt) => {
         baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
-            map.getView().fit(feature.getGeometry());
+            map.getView().fit(feature.getGeometry(), {duration: 1000});
             // lastFeature = feature;
 
             feature.set('isActive', true);
+            markers.forEach(marker => map.removeLayer(marker));
+            backButton.style.display = 'block';
         })
+    })
+
+    backButton.addEventListener('click', () => {
+        backButton.style.display = 'none';
+        markers.forEach(marker => map.addLayer(marker));
+        view.animate({
+            zoom: 11,
+            center: fromLonLat([37.618423, 55.751244]),
+        });
     })
 }
 
