@@ -2,24 +2,22 @@ import './style.css';
 import {Feature, Map, View} from 'ol';
 import TileLayer from 'ol/layer/Tile';
 import OSM from 'ol/source/OSM';
-import StadiaMaps from 'ol/source/StadiaMaps'
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from "ol/layer/Vector";
-import {Circle as CircleStyle, Fill, Icon, Stroke, Style} from 'ol/style';
-import {Point, Polygon} from "ol/geom";
-import {Heatmap as HeatmapLayer} from 'ol/layer.js';
-import KML from 'ol/format/KML.js';
-import {getVectorContext} from 'ol/render.js';
-
-const image = new CircleStyle({
-    radius: 5,
-    fill: null,
-    stroke: new Stroke({color: 'purple', width: 10}),
-});
+import {Fill, Icon, Stroke, Style} from 'ol/style';
+import {Point} from "ol/geom";
+import {Heatmap as HeatmapLayer} from 'ol/layer';
+import KML from 'ol/format/KML';
+import {getVectorContext} from 'ol/render';
 
 
+/**
+ * функция для стилизации фич
+ * @param feature
+ * @returns {{Polygon: Style, MultiPolygon: Style}}
+ */
 const styles = (feature) => {
     const isActive = feature.get('isActive') === true;
     return ({
@@ -32,7 +30,7 @@ const styles = (feature) => {
                 color: 'rgba(255, 255, 255, 0.2)',
             }),
         }),
-    'MultiPolygon': new Style({
+        'MultiPolygon': new Style({
             stroke: new Stroke({
                 color: 'rgba(255, 255, 255, 0.5)',
                 width: isActive ? 4 : 1,
@@ -45,27 +43,59 @@ const styles = (feature) => {
     });
 }
 
-const styleFunction = function (feature) {
-    return styles(feature)[feature.getGeometry().getType()];
-};
+/**
+ * функция возвращающая нужные стили в зависимости от типа
+ * @param feature
+ * @returns {*}
+ */
+const styleFunction = (feature) => styles(feature)[feature.getGeometry().getType()];
+
 
 const style = new Style({
     fill: new Fill({
-      color: 'black',
+        color: 'black',
     }),
-  });
-  
+});
 
-function getRandomInt(max) {
-    return Math.floor(Math.random() * max);
-  }  
+/**
+ * функция генератор рандомных целых чисел
+ * @param max
+ * @returns {number}
+ */
+const getRandomInt = (max) => Math.floor(Math.random() * max);
+
+/**
+ * наложение стилей на тайл
+ * @param tile
+ */
+const handleTile = (tile) => {
+    tile.on('prerender', (evt) => {
+        if (evt.context) {
+            const context = evt.context;
+            context.filter = 'grayscale(80%) invert(100%) hue-rotate(0deg)';
+            context.globalCompositeOperation = 'source-over';
+        }
+    });
+    tile.on('postrender', (evt) => {
+        if (evt.context) {
+            const context = evt.context;
+            context.filter = 'none';
+        }
+    });
+}
 
 const fetchData = async () => {
-    // const response = await fetch('./static/Moscow.geojson');
+    /**
+     * скачивание геоджесона (для районов Москвы)
+     * @type {Response}
+     */
     const baseResponse = await fetch('./static/Moscow.geojson');
     const baseGeoJson = await baseResponse.json();
 
-
+    /**
+     * создание базового вектора на основе геоджесана (для районов Москвы)
+     * @type {VectorSource<Feature<import("../geom/Geometry.js").default>>}
+     */
     const baseVectorSource = new VectorSource({
         features: new GeoJSON().readFeatures(baseGeoJson, {
             dataProjection: 'EPSG:4326',
@@ -73,95 +103,70 @@ const fetchData = async () => {
         }),
     });
 
+    /**
+     * создание базового слоя на основе базового вектора
+     * @type {VectorLayer<VectorSource<Feature<import("../geom/Geometry.js").default>>, import("./BaseVector.js").ExtractedFeatureType<VectorSource<Feature<import("../geom/Geometry.js").default>>>>}
+     */
     const baseVectorLayer = new VectorLayer({
         source: baseVectorSource,
         style: styleFunction,
     });
 
-    
-
+    /**
+     * создание базового тайла (вся карта мира, но без карты Москвы)
+     * @type {TileLayer<OSM>}
+     */
     const baseTile = new TileLayer({
         source: new OSM(),
-        // source: new StadiaMaps({
-        //   layer: 'alidade_smooth_dark',
-        //   retina: true,
-        //   // apiKey: 'OPTIONAL'
-        // }),
     });
 
-    baseTile.on('prerender', (evt) => {
-        // return
-        if (evt.context) {
-            const context = evt.context;
-            context.filter = 'grayscale(80%) invert(100%) hue-rotate(0deg)';
-            context.globalCompositeOperation = 'source-over';
-        }
+    /**
+     * создание обрезанного тайла (только карта Москвы)
+     * @type {TileLayer<OSM>}
+     */
+    const clipTile = new TileLayer({
+        source: new OSM(),
     });
 
-    baseTile.on('postrender', (evt) => {
-        if (evt.context) {
-            const context = evt.context;
-            context.filter = 'none';
-        }
+    handleTile(baseTile);
+    handleTile(clipTile);
+
+    /**
+     * создание хитмапы из kml файла
+     * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
+     */
+    const heatmap = new HeatmapLayer({
+        source: new VectorSource({
+            url: './static/HeatMap.kml',
+            format: new KML({
+                extractStyles: false,
+            }),
+        }),
+        blur: 200,
+        radius: 200,
+        weight: (feature) => {
+            const name = feature.get('name');
+            const magnitude = parseFloat(name.substr(2));
+            return magnitude - 5;
+        },
     });
 
-    
+    /**
+     * задание цвета для хитмапы
+     */
+    heatmap.setGradient(['#ffffff', '#00ff00', '#0000ff'])
 
-
-    
-
-const clipTile = new TileLayer({
-    source: new OSM(),
-    
-});
-
-clipTile.on('prerender', (evt) => {
-    // return
-    if (evt.context) {
-        const context = evt.context;
-        context.filter = 'grayscale(80%) invert(100%) hue-rotate(0deg)';
-        context.globalCompositeOperation = 'source-over';
-    }
-});
-
-clipTile.on('postrender', (evt) => {
-    if (evt.context) {
-        const context = evt.context;
-        context.filter = 'none';
-    }
-});
-
-
-const vector = new HeatmapLayer({
-    source: new VectorSource({
-      url: './static/2012_Earthquakes_Mag5.kml',
-      format: new KML({
-        extractStyles: false,
-      }),
-    }),
-    blur: 100,
-    radius: 200,
-    weight: function (feature) {
-      // 2012_Earthquakes_Mag5.kml stores the magnitude of each earthquake in a
-      // standards-violating <magnitude> tag in each Placemark.  We extract it from
-      // the Placemark's name instead.
-      const name = feature.get('name');
-      const magnitude = parseFloat(name.substr(2));
-      return magnitude - 5;
-    },
-  });
-
-
-
-  
-
-  vector.setGradient(['#ffffff', '#00ff00', '#0000ff'])
-
-  
-  const clipResponse = await fetch('./static/moscow_full.geojson');
+    /**
+     * скачивание карты Москвы (общий полигон для Москвы без разбивки по районам)
+     * @type {Response}
+     */
+    const clipResponse = await fetch('./static/moscow_full.geojson');
     const clipGeoJson = await clipResponse.json();
 
-
+    /**
+     * создание обрезанного вектора на основе геоджесона (общий полигон для Москвы без разбивки по районам)
+     * @type {VectorSource<Feature<import("../geom/Geometry.js").default>>}
+     */
     const clipVectorSource = new VectorSource({
         features: new GeoJSON().readFeatures(clipGeoJson, {
             dataProjection: 'EPSG:4326',
@@ -169,40 +174,48 @@ const vector = new HeatmapLayer({
         }),
     });
 
+    /**
+     * создание обрезанного слоя на основе обрезанного ветора
+     * @type {VectorLayer<VectorSource<Feature<import("../geom/Geometry.js").default>>, import("./BaseVector.js").ExtractedFeatureType<VectorSource<Feature<import("../geom/Geometry.js").default>>>>}
+     */
     const clipVectorLayer = new VectorLayer({
         source: clipVectorSource,
         style: styleFunction,
     });
 
-    clipVectorLayer.getSource().on('addfeature', function () {
-        clipTile.setExtent(clipVectorLayer.getSource().getExtent());
-      });
-
-      baseTile.on('postrender', function (e) {
+    /**
+     * обрезка базового тайла (вырезание из карты города Москва)
+     */
+    baseTile.on('postrender', function (e) {
         const vectorContext = getVectorContext(e);
         e.context.globalCompositeOperation = 'destination-out';
         clipVectorLayer.getSource().forEachFeature(function (feature) {
-          vectorContext.drawFeature(feature, style);
+            vectorContext.drawFeature(feature, style);
         });
         e.context.globalCompositeOperation = 'source-over';
-      });
+    });
 
-      clipTile.on('postrender', function (e) {
+    /**
+     * обрезка обрезанного тайла (вырезание всей карты - оставляем только Москву)
+     */
+    clipTile.on('postrender', function (e) {
         const vectorContext = getVectorContext(e);
         e.context.globalCompositeOperation = 'destination-in';
         clipVectorLayer.getSource().forEachFeature(function (feature) {
-          vectorContext.drawFeature(feature, style);
+            vectorContext.drawFeature(feature, style);
         });
         e.context.globalCompositeOperation = 'source-over';
-      });
-      
+    });
 
-
+    /**
+     * создание карты
+     * @type {Map}
+     */
     const map = new Map({
         target: 'map',
         layers: [
             clipTile,
-            vector, 
+            heatmap,
             baseTile,
             clipVectorLayer,
             baseVectorLayer,
@@ -214,14 +227,17 @@ const vector = new HeatmapLayer({
         }),
     });
 
+    /**
+     * добавление маркеров на карту
+     */
     baseVectorSource.getFeatures().forEach((feature, idx) => {
-        if (feature.getGeometry().getType() === 'Polygon') {
-            const coords = feature.getGeometry().getExtent();
-            const iconFeature = new Feature({
-                geometry: new Point([(coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2])
-            })
+            if (feature.getGeometry().getType() === 'Polygon') {
+                const coords = feature.getGeometry().getExtent();
+                const iconFeature = new Feature({
+                    geometry: new Point([(coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2])
+                })
 
-            const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
+                const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
 
 <circle r="5" cx="10" cy="10" fill="bisque" /> 
 <circle r="5" cx="10" cy="10" fill="transparent"
@@ -250,31 +266,34 @@ stroke-dashoffset="-25.12"
 <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" >${getRandomInt(1000)}</text>
 </svg>`;
 
-            const style = new Style({
-                image: new Icon({
-                    opacity: 1,
-                    src: 'data:image/svg+xml;utf8,' + svg,
-                    scale: 0.3
-                })
-            });
+                const style = new Style({
+                    image: new Icon({
+                        opacity: 1,
+                        src: 'data:image/svg+xml;utf8,' + svg,
+                        scale: 0.3
+                    })
+                });
 
-            iconFeature.setStyle(style)
+                iconFeature.setStyle(style)
 
-            const vectorSource = new VectorSource({
-                features: [iconFeature],
-            });
+                const vectorSource = new VectorSource({
+                    features: [iconFeature],
+                });
 
-            const vectorLayer = new VectorLayer({
-                source: vectorSource,
-            });
+                const vectorLayer = new VectorLayer({
+                    source: vectorSource,
+                });
 
-            map.addLayer(vectorLayer);
+                map.addLayer(vectorLayer);
+            }
         }
-    }
-)
+    )
 
     let lastFeature = null;
 
+    /**
+     * применение стилей к областям Москвы при наведении на них
+     */
     map.on('pointermove', (evt) => {
         if (lastFeature) {
             lastFeature.set('isActive', false);
@@ -285,11 +304,14 @@ stroke-dashoffset="-25.12"
         })
     })
 
+    /**
+     * применение стилей + переход к нужному району на клик
+     */
     map.on('click', (evt) => {
         baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
             map.getView().fit(feature.getGeometry());
             // lastFeature = feature;
-            
+
             feature.set('isActive', true);
         })
     })
