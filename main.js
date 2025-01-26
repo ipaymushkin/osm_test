@@ -6,12 +6,13 @@ import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from "ol/layer/Vector";
-import {Fill, Icon, Stroke, Style} from 'ol/style';
+import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
 import {Point} from "ol/geom";
 import {Heatmap as HeatmapLayer} from 'ol/layer';
 import KML from 'ol/format/KML';
 import {getVectorContext} from 'ol/render';
 import {defaults as defaultInteractions} from 'ol/interaction';
+import CircleStyle from "ol/style/Circle";
 
 /**
  * функция для стилизации фич
@@ -57,12 +58,14 @@ const style = new Style({
     }),
 });
 
+
 /**
  * функция генератор рандомных целых чисел
+ * @param min
  * @param max
  * @returns {number}
  */
-const getRandomInt = (max) => Math.floor(Math.random() * max);
+const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
 
 /**
  * наложение стилей на тайл
@@ -82,6 +85,41 @@ const handleTile = (tile) => {
             context.filter = 'none';
         }
     });
+}
+
+/**
+ * функция обработки хитмапы
+ * @param url
+ * @param colors
+ * @returns {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
+ */
+const handleHeatMap = (url, colors) => {
+    /**
+     * создание хитмапы из kml файла
+     * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
+     */
+    const heatmap = new HeatmapLayer({
+        source: new VectorSource({
+            url,
+            format: new KML({
+                extractStyles: false,
+            }),
+        }),
+        blur: 100,
+        radius: 150,
+        weight: (feature) => {
+            const name = feature.get('name');
+            const magnitude = parseFloat(name.substr(2));
+            return magnitude - 5;
+        },
+    });
+
+    /**
+     * задание цвета для хитмапы
+     */
+    heatmap.setGradient(colors);
+
+    return heatmap;
 }
 
 const fetchData = async () => {
@@ -132,52 +170,10 @@ const fetchData = async () => {
     handleTile(baseTile);
     handleTile(clipTile);
 
-    /**
-     * создание хитмапы из kml файла
-     * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
-     */
-    const heatmap = new HeatmapLayer({
-        source: new VectorSource({
-            url: './static/HeatMap.kml',
-            format: new KML({
-                extractStyles: false,
-            }),
-        }),
-        blur: 100,
-        radius: 150,
-        weight: (feature) => {
-            const name = feature.get('name');
-            const magnitude = parseFloat(name.substr(2));
-            return magnitude - 5;
-        },
-    });
-
-    /**
-     * задание цвета для хитмапы
-     */
-    heatmap.setGradient(['#e1823e', '#f93519'])
-
-    /**
-     * создание хитмапы из kml файла
-     * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
-     */
-    const heatmap2 = new HeatmapLayer({
-        source: new VectorSource({
-            url: './static/HeatMap2.kml',
-            format: new KML({
-                extractStyles: false,
-            }),
-        }),
-        blur: 100,
-        radius: 150,
-        weight: (feature) => {
-            const name = feature.get('name');
-            const magnitude = parseFloat(name.substr(2));
-            return magnitude - 5;
-        },
-    });
-
-    heatmap2.setGradient(['#596fb8', '#821bf1'])
+    const heatmaps = [
+        handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
+        handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1'])
+    ];
 
     /**
      * скачивание карты Москвы (общий полигон для Москвы без разбивки по районам)
@@ -247,8 +243,7 @@ const fetchData = async () => {
         target: 'map',
         layers: [
             clipTile,
-            heatmap,
-            heatmap2,
+            ...heatmaps,
             baseTile,
             clipVectorLayer,
             baseVectorLayer,
@@ -265,6 +260,12 @@ const fetchData = async () => {
      * @type {*[]}
      */
     const markers = [];
+
+    /**
+     * переменная для хранения точек
+     * @type {*[]}
+     */
+    let mapPoints = [];
 
     /**
      * добавление маркеров на карту
@@ -302,7 +303,7 @@ stroke-dashoffset="-15.7"
 stroke-dashoffset="-25.12"
 />
 <circle r="8" cx="10" cy="10"/>
-<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" >${getRandomInt(1000)}</text>
+<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" >${getRandomInt(1, 1000)}</text>
 </svg>`;
 
                 const style = new Style({
@@ -361,6 +362,37 @@ stroke-dashoffset="-25.12"
             feature.set('isActive', true);
             markers.forEach(marker => map.removeLayer(marker));
             backButton.style.display = 'block';
+
+            const coords = feature.getGeometry().getExtent();
+
+
+            mapPoints = new Array(getRandomInt(5, 20)).fill(0).map(_ => {
+                const pointFeature = new Feature({
+                    geometry: new Point([
+                        getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])),
+                        getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1]))
+                    ]),
+                    size: getRandomInt(5, 15),
+                });
+
+                const pointSource = new VectorSource({
+                    features: [pointFeature],
+                });
+
+                const pointVector = new VectorLayer({
+                    source: pointSource,
+                    style: new Style({
+                        image: new Circle({
+                            fill: new Fill({
+                                color: ['rgba(48,25,52,0.5)', 'rgba(139,128,0,0.5)', 'rgba(139,0,0,0.5)', "rgba(0,0,139,0.5)"][getRandomInt(0, 3)]
+                            }),
+                            radius: getRandomInt(5, 10)
+                        }),
+                    })
+                });
+                map.addLayer(pointVector);
+                return pointVector;
+            });
         })
     })
 
@@ -371,6 +403,9 @@ stroke-dashoffset="-25.12"
             zoom: 11,
             center: fromLonLat([37.618423, 55.751244]),
         });
+        console.log('___', mapPoints)
+        mapPoints.forEach(marker => map.removeLayer(marker));
+        mapPoints = [];
     })
 }
 
