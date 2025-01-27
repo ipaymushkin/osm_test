@@ -279,32 +279,32 @@ const fetchData = async () => {
 
                 const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
 
-<circle r="5" cx="10" cy="10" fill="bisque" /> 
-<circle r="5" cx="10" cy="10" fill="transparent"
-      stroke="tomato"
-      stroke-width="10"
-      stroke-dasharray="10.99 31.4" />
-<circle r="5" cx="10" cy="10" fill="transparent"
-      stroke="dodgerblue"
-      stroke-width="10"
-      stroke-dasharray="4.71 31.4"
-stroke-dashoffset="-10.99"
-/>
-<circle r="5" cx="10" cy="10" fill="transparent"
-      stroke="gold"
-      stroke-width="10"
-      stroke-dasharray="9.42 31.4"
-stroke-dashoffset="-15.7"
-/>
-<circle r="5" cx="10" cy="10" fill="transparent"
-      stroke="yellowgreen"
-      stroke-width="10"
-      stroke-dasharray="6.28 31.4"
-stroke-dashoffset="-25.12"
-/>
-<circle r="8" cx="10" cy="10"/>
-<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" >${getRandomInt(1, 1000)}</text>
-</svg>`;
+                <circle r="5" cx="10" cy="10" fill="bisque" /> 
+                <circle r="5" cx="10" cy="10" fill="transparent"
+                          stroke="tomato"
+                          stroke-width="10"
+                          stroke-dasharray="10.99 31.4" />
+                <circle r="5" cx="10" cy="10" fill="transparent"
+                          stroke="dodgerblue"
+                          stroke-width="10"
+                          stroke-dasharray="4.71 31.4"
+                            stroke-dashoffset="-10.99"
+                />
+                <circle r="5" cx="10" cy="10" fill="transparent"
+                        stroke="gold"
+                        stroke-width="10"
+                        stroke-dasharray="9.42 31.4"
+                        stroke-dashoffset="-15.7"
+                />
+                <circle r="5" cx="10" cy="10" fill="transparent"
+                          stroke="yellowgreen"
+                          stroke-width="10"
+                          stroke-dasharray="6.28 31.4"
+                    stroke-dashoffset="-25.12"
+                />
+                <circle r="8" cx="10" cy="10"/>
+                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" >${getRandomInt(1, 1000)}</text>
+                </svg>`;
 
                 const style = new Style({
                     image: new Icon({
@@ -403,7 +403,6 @@ stroke-dashoffset="-25.12"
             zoom: 11,
             center: fromLonLat([37.618423, 55.751244]),
         });
-        console.log('___', mapPoints)
         mapPoints.forEach(marker => map.removeLayer(marker));
         mapPoints = [];
     })
