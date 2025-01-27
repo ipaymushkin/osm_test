@@ -106,7 +106,7 @@ const handleHeatMap = (url, colors) => {
             }),
         }),
         blur: 100,
-        radius: 150,
+        radius: Math.floor((Math.random() + 0.5) * 150),
         weight: (feature) => {
             const name = feature.get('name');
             const magnitude = parseFloat(name.substr(2));
@@ -172,7 +172,12 @@ const fetchData = async () => {
 
     const heatmaps = [
         handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
-        handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1'])
+        handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
+        handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
+        handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
+        handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
+        handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
+        handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
     ];
 
     /**
