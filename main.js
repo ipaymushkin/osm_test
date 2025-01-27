@@ -284,30 +284,33 @@ const fetchData = async () => {
 
                 const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
 
-                <circle r="5" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
+                <circle r="5" cx="10" cy="10" fill="transparent"
+                          stroke="rgba(100, 223, 230, 1)"
+                          stroke-width="10"
+                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                    stroke-dashoffset="-${Math.floor((Math.random()) * 30)}"
+                />
+                
                 <circle r="5" cx="10" cy="10" fill="transparent"
                           stroke="rgba(235, 121, 87, 1)"
                           stroke-width="10"
-                          stroke-dasharray="10.99 31.4" /> 
+                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42" /> 
+                          stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
                 <circle r="5" cx="10" cy="10" fill="transparent"
                           stroke="rgba(108, 22, 247, 1)"
                           stroke-width="10"
-                          stroke-dasharray="4.71 31.4"
-                            stroke-dashoffset="-10.99"
+                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                            stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
                 />
                 <circle r="5" cx="10" cy="10" fill="transparent"
                         stroke="rgba(245, 194, 69, 1)"
                         stroke-width="10"
-                        stroke-dasharray="9.42 31.4"
-                        stroke-dashoffset="-15.7"
+                        stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                        stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
                 />
-                <circle r="5" cx="10" cy="10" fill="transparent"
-                          stroke="rgba(100, 223, 230, 1)"
-                          stroke-width="10"
-                          stroke-dasharray="6.28 31.4"
-                    stroke-dashoffset="-25.12"
-                />
-                <circle r="8" cx="10" cy="10"/>
+                
+                <circle r="8" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
+               
                 <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold">${getRandomInt(1, 1000)}</text>
                 </svg>`;
 
