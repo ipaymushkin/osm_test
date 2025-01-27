@@ -24,20 +24,20 @@ const styles = (feature) => {
     return ({
         'Polygon': new Style({
             stroke: new Stroke({
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: 'rgba(255, 255, 255, 0.3)',
                 width: isActive ? 4 : 1,
             }),
             fill: new Fill({
-                color: 'rgba(255, 255, 255, 0.2)',
+                color: 'rgba(255, 255, 255, 0.1)',
             }),
         }),
         'MultiPolygon': new Style({
             stroke: new Stroke({
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: 'rgba(255, 255, 255, 0.2)',
                 width: isActive ? 4 : 1,
             }),
             fill: new Fill({
-                color: 'rgba(255, 255, 255, 0.2)',
+                color: 'rgba(255, 255, 255, 0.1)',
             }),
         }),
 
