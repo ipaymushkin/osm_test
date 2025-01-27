@@ -288,7 +288,7 @@ const fetchData = async () => {
                 <circle r="5" cx="10" cy="10" fill="transparent"
                           stroke="rgba(235, 121, 87, 1)"
                           stroke-width="10"
-                          stroke-dasharray="10.99 31.4" />
+                          stroke-dasharray="10.99 31.4" /> 
                 <circle r="5" cx="10" cy="10" fill="transparent"
                           stroke="rgba(108, 22, 247, 1)"
                           stroke-width="10"
