@@ -14,6 +14,23 @@ import {getVectorContext} from 'ol/render';
 import {defaults as defaultInteractions} from 'ol/interaction';
 import CircleStyle from "ol/style/Circle";
 
+import { FPS } from 'yy-fps'
+const fps = new FPS()
+
+// or if including the file directly:
+// const fps = FPS.FPS()
+
+// update function
+function update() {
+    // do stuff like rendering and dancing
+
+    fps.frame()
+
+    requestAnimationFrame(update)
+}
+
+update()
+
 /**
  * функция для стилизации фич
  * @param feature
