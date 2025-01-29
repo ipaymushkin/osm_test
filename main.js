@@ -374,7 +374,6 @@ const fetchData = async () => {
     })
 
     const createMarker = (lng, lat, id) => {
-        console.log('marker')
         return new Feature({
             geometry: new Point([parseFloat(lng), parseFloat(lat)]),
             id: id
@@ -392,7 +391,7 @@ const fetchData = async () => {
     
 
     const pointSource = new VectorSource({
-        // features: [pointFeature],
+        features: [createMarker(4161328, 7520469, '')],
     });
 
     const pointVector = new VectorLayer({
@@ -400,7 +399,7 @@ const fetchData = async () => {
         style: new Style({
             image: new Circle({
                 fill: new Fill({
-                    color: ['rgba(48,25,52,0.5)', 'rgba(139,128,0,0.5)', 'rgba(139,0,0,0.5)', "rgba(0,0,139,0.5)"][getRandomInt(0, 3)]
+                    color: ['rgba(48,25,52,1)', 'rgba(139,128,0,1)', 'rgba(139,0,0,1)', "rgba(0,0,139,1)"][getRandomInt(0, 3)]
                 }),
                 radius: getRandomInt(5, 10)
             }),
@@ -414,41 +413,82 @@ const fetchData = async () => {
      */
     map.on('click', (evt) => {
         console.log('here')
-        baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
-            map.getView().fit(feature.getGeometry(), {duration: 1000});
+        const coords = baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+            map.getView().fit(feature.getGeometry(), {duration: 500});
             // lastFeature = feature;
 
             feature.set('isActive', true);
-            markers.forEach(marker => map.removeLayer(marker));
+            // markers.forEach(marker => map.removeLayer(marker));
             backButton.style.display = 'block';
 
             const coords = feature.getGeometry().getExtent();
             
             console.log('coords', coords, feature)
-            
-
-            mapPoints = new Array(getRandomInt(5, 20)).fill(0).map(_ => {
-                
-                const pointFeature = new Feature({
-                    geometry: new Point([
-                        getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])),
-                        getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1]))
-                    ]),
-                    size: getRandomInt(5, 15),
-                });
-
-                for (let i = 0; i < mapPoints.length; i++) {
-                    pointVector.getSource().addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), feature.getGeometry().getExtent()[0], pointFeature.getId()))
-                }
-                
-                // return pointVector;
-                pointSource.addFeatures([pointFeature])
-            });
-
             console.log('map layers',map.getAllLayers())
+
+            return coords;
             
         })
+
+        pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
     })
+
+    let selected = null;
+
+    // map.on('pointermove', function (e) {
+    //     if (selected !== null) {
+    //       selected.setStyle(undefined);
+    //       selected = null;
+    //     }
+      
+    //     map.forEachFeatureAtPixel(e.pixel, function (f) {
+    //       selected = f;
+    //       console.log('f', f.getGeometry().getStyle());
+          
+    //       if(selected) {
+    //         console.log('selected', selected.getFill());
+            
+    //           selectStyle.setFill(f.get('COLOR') || '#eeeeee');
+    //           f.setStyle(selectStyle);
+    //       }
+    //       return true;
+    //     });
+      
+    //     if (selected) {
+    //       status.innerHTML = selected.get('ECO_NAME');
+    //     } else {
+    //       status.innerHTML = '&nbsp;';
+    //     }
+    //   });
+
+//     let currentFeature;
+// const displayFeatureInfo = function (pixel, target) {
+//   const feature = target.closest('.ol-control')
+//     ? undefined
+//     : map.forEachFeatureAtPixel(pixel, function (feature) {
+//         return feature;
+//       });
+//   if (feature) {
+//     info.style.left = pixel[0] + 'px';
+//     info.style.top = pixel[1] + 'px';
+//     if (feature !== currentFeature) {
+//       info.style.visibility = 'visible';
+//       info.innerText = feature.get('ECO_NAME');
+//     }
+//   } else {
+//     info.style.visibility = 'hidden';
+//   }
+//   currentFeature = feature;
+// };
+
+// map.on('pointermove', function (evt) {
+//   if (evt.dragging) {
+//     info.style.visibility = 'hidden';
+//     currentFeature = undefined;
+//     return;
+//   }
+//   displayFeatureInfo(evt.pixel, evt.originalEvent.target);
+// });
     
 
     backButton.addEventListener('click', () => {
