@@ -349,7 +349,7 @@ const fetchData = async () => {
                     source: vectorSource,
                 });
 
-                markers.push(vectorLayer);
+                // markers.push(vectorLayer);
                 map.addLayer(vectorLayer);
             }
         }
@@ -370,16 +370,47 @@ const fetchData = async () => {
         })
     })
 
+    const createMarker = (lng, lat, id) => {
+        console.log('marker')
+        return new Feature({
+            geometry: new Point([parseFloat(lng), parseFloat(lat)]),
+            id: id
+        });
+    }
+
     /**
      * селектор для кнопки назад
      * @type {HTMLElement}
      */
     const backButton = document.getElementById('back_button');
 
+    // let pointVector = undefined;
+
+    
+
+    const pointSource = new VectorSource({
+        // features: [pointFeature],
+    });
+
+    const pointVector = new VectorLayer({
+        source: pointSource,
+        style: new Style({
+            image: new Circle({
+                fill: new Fill({
+                    color: ['rgba(48,25,52,0.5)', 'rgba(139,128,0,0.5)', 'rgba(139,0,0,0.5)', "rgba(0,0,139,0.5)"][getRandomInt(0, 3)]
+                }),
+                radius: getRandomInt(5, 10)
+            }),
+        })
+    });
+
+    map.addLayer(pointVector);
+
     /**
      * применение стилей + переход к нужному району на клик
      */
     map.on('click', (evt) => {
+        console.log('here')
         baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
             map.getView().fit(feature.getGeometry(), {duration: 1000});
             // lastFeature = feature;
@@ -389,9 +420,12 @@ const fetchData = async () => {
             backButton.style.display = 'block';
 
             const coords = feature.getGeometry().getExtent();
-
+            
+            console.log('coords', coords, feature)
+            
 
             mapPoints = new Array(getRandomInt(5, 20)).fill(0).map(_ => {
+                
                 const pointFeature = new Feature({
                     geometry: new Point([
                         getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])),
@@ -400,35 +434,32 @@ const fetchData = async () => {
                     size: getRandomInt(5, 15),
                 });
 
-                const pointSource = new VectorSource({
-                    features: [pointFeature],
-                });
-
-                const pointVector = new VectorLayer({
-                    source: pointSource,
-                    style: new Style({
-                        image: new Circle({
-                            fill: new Fill({
-                                color: ['rgba(48,25,52,0.5)', 'rgba(139,128,0,0.5)', 'rgba(139,0,0,0.5)', "rgba(0,0,139,0.5)"][getRandomInt(0, 3)]
-                            }),
-                            radius: getRandomInt(5, 10)
-                        }),
-                    })
-                });
-                map.addLayer(pointVector);
-                return pointVector;
+                for (let i = 0; i < mapPoints.length; i++) {
+                    pointVector.getSource().addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), feature.getGeometry().getExtent()[0], pointFeature.getId()))
+                }
+                
+                // return pointVector;
+                pointSource.addFeatures([pointFeature])
             });
+
+            console.log('map layers',map.getAllLayers())
+            
         })
     })
+    
 
     backButton.addEventListener('click', () => {
         backButton.style.display = 'none';
-        markers.forEach(marker => map.addLayer(marker));
+        // markers.forEach(marker => map.addLayer(marker));
         view.animate({
             zoom: 11,
             center: fromLonLat([37.618423, 55.751244]),
         });
-        mapPoints.forEach(marker => map.removeLayer(marker));
+        // mapPoints.forEach(marker => map.removeLayer(marker));
+        // console.log('pointVector', pointVector);
+        console.log('map', map.getAllLayers());
+        
+        pointSource.clear()
         mapPoints = [];
     })
 }
