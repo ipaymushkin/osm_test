@@ -277,6 +277,17 @@ const fetchData = async () => {
         })
     });
 
+    const vectorSource = new VectorSource({
+        // features: [iconFeature],
+    });
+
+    const vectorLayer = new VectorLayer({
+        source: vectorSource,
+    });
+
+    // markers.push(vectorLayer);
+    map.addLayer(vectorLayer);
+
     /**
      * переменная для хранения маркеров
      * @type {*[]}
@@ -341,16 +352,8 @@ const fetchData = async () => {
 
                 iconFeature.setStyle(style)
 
-                const vectorSource = new VectorSource({
-                    features: [iconFeature],
-                });
-
-                const vectorLayer = new VectorLayer({
-                    source: vectorSource,
-                });
-
-                // markers.push(vectorLayer);
-                map.addLayer(vectorLayer);
+                vectorSource.addFeatures([iconFeature])
+                
             }
         }
     )
