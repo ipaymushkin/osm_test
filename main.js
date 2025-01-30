@@ -12,7 +12,7 @@ import {Heatmap as HeatmapLayer} from 'ol/layer';
 import KML from 'ol/format/KML';
 import {getVectorContext} from 'ol/render';
 import {defaults as defaultInteractions} from 'ol/interaction';
-import CircleStyle from "ol/style/Circle";
+import {throttle} from "lodash";
 
 import { FPS } from 'yy-fps'
 const fps = new FPS()
@@ -383,15 +383,20 @@ const fetchData = async () => {
     /**
      * применение стилей к областям Москвы при наведении на них
      */
-    map.on('pointermove', (evt) => {
+    /**
+     * применение стилей к областям Москвы при наведении на них
+     */
+
+    const handleMove = (evt) => {
         if (lastFeature) {
             lastFeature.set('isActive', false);
         }
-        districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+        map.forEachFeatureAtPixel(evt.pixel, feature => {
             lastFeature = feature;
             feature.set('isActive', true)
         })
-    })
+    }
+    map.on('pointermove', throttle(handleMove, 100));
 
     const createMarker = (lng, lat, id) => {
         return new Feature({
