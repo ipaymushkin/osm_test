@@ -31,6 +31,64 @@ function update() {
 
 update()
 
+const markerGenerator = (sourceFrom, sourceTo) => {
+    sourceFrom.getFeatures().forEach((feature, idx) => {
+        // if (feature.getGeometry().getType() === 'Polygon') {
+        // console.log('feature', feature)
+            const coords = feature.getGeometry().getExtent();
+            const iconFeature = new Feature({
+                geometry: new Point([(coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2])
+            })
+
+            const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
+
+            <circle r="5" cx="10" cy="10" fill="transparent"
+                      stroke="rgba(100, 223, 230, 1)"
+                      stroke-width="10"
+                      stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                stroke-dashoffset="-${Math.floor((Math.random()) * 30)}"
+            />
+            
+            <circle r="5" cx="10" cy="10" fill="transparent"
+                      stroke="rgba(235, 121, 87, 1)"
+                      stroke-width="10"
+                      stroke-dasharray="calc(50 * 31.42 / 100) 31.42" /> 
+                      stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
+            <circle r="5" cx="10" cy="10" fill="transparent"
+                      stroke="rgba(108, 22, 247, 1)"
+                      stroke-width="10"
+                      stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                        stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
+            />
+            <circle r="5" cx="10" cy="10" fill="transparent"
+                    stroke="rgba(245, 194, 69, 1)"
+                    stroke-width="10"
+                    stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                    stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
+            />
+            
+            <circle r="8" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
+           
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold">${getRandomInt(1, 1000)}</text>
+            </svg>`;
+
+            const style = new Style({
+                image: new Icon({
+                    opacity: 1,
+                    src: 'data:image/svg+xml;utf8,' + svg,
+                    scale: 0.3
+                })
+            });
+
+            iconFeature.setStyle(style)
+
+            sourceTo? sourceTo.addFeatures([iconFeature]) : sourceFrom.addFeatures([iconFeature])
+            
+        // }
+    }
+)
+}
+
 /**
  * функция для стилизации фич
  * @param feature
@@ -322,61 +380,7 @@ const fetchData = async () => {
     /**
      * добавление маркеров на карту
      */
-    districtsVectorSource.getFeatures().forEach((feature, idx) => {
-            // if (feature.getGeometry().getType() === 'Polygon') {
-            // console.log('feature', feature)
-                const coords = feature.getGeometry().getExtent();
-                const iconFeature = new Feature({
-                    geometry: new Point([(coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2])
-                })
-
-                const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
-
-                <circle r="5" cx="10" cy="10" fill="transparent"
-                          stroke="rgba(100, 223, 230, 1)"
-                          stroke-width="10"
-                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
-                    stroke-dashoffset="-${Math.floor((Math.random()) * 30)}"
-                />
-                
-                <circle r="5" cx="10" cy="10" fill="transparent"
-                          stroke="rgba(235, 121, 87, 1)"
-                          stroke-width="10"
-                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42" /> 
-                          stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
-                <circle r="5" cx="10" cy="10" fill="transparent"
-                          stroke="rgba(108, 22, 247, 1)"
-                          stroke-width="10"
-                          stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
-                            stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
-                />
-                <circle r="5" cx="10" cy="10" fill="transparent"
-                        stroke="rgba(245, 194, 69, 1)"
-                        stroke-width="10"
-                        stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
-                        stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
-                />
-                
-                <circle r="8" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
-               
-                <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold">${getRandomInt(1, 1000)}</text>
-                </svg>`;
-
-                const style = new Style({
-                    image: new Icon({
-                        opacity: 1,
-                        src: 'data:image/svg+xml;utf8,' + svg,
-                        scale: 0.3
-                    })
-                });
-
-                iconFeature.setStyle(style)
-
-                vectorSource.addFeatures([iconFeature])
-                
-            // }
-        }
-    )
+    markerGenerator(districtsVectorSource, vectorSource)
 
     let lastFeature = null;
 
@@ -433,11 +437,15 @@ const fetchData = async () => {
 
     map.addLayer(pointVector);
 
-    let layerVectorLayer = undefined;
+    let layerVectorLayer = new VectorLayer({
+        // source: layerVectorSource,
+        style: styleFunction,
+    });
+
+    map.addLayer(layerVectorLayer)
 
     const fetchLayer = async (layer) => {
-        console.log('okato', layer);
-        
+
         const layerResponse = await fetch(`./static/${layer}.geojson`);
         const layerGeoJson = await layerResponse.json();
     
@@ -448,12 +456,8 @@ const fetchData = async () => {
             }),
         });
     
-        layerVectorLayer = new VectorLayer({
-            source: layerVectorSource,
-            style: styleFunction,
-        });
-
-        map.addLayer(layerVectorLayer)
+        layerVectorLayer.setSource(layerVectorSource);
+        markerGenerator(layerVectorSource)
 
         return layerVectorLayer;
     }
@@ -466,31 +470,26 @@ const fetchData = async () => {
             map.getView().fit(feature.getGeometry(), {duration: 500});
             // lastFeature = feature;
 
+            vectorSource.clear();
+
             feature.set('isActive', true);
             // markers.forEach(marker => map.removeLayer(marker));
             backButton.style.display = 'block';
 
             const coords = feature.getGeometry().getExtent();
-            
-            // console.log('coords', coords, feature)
-            // console.log('map layers',map.getAllLayers())
 
             const layer = fetchLayer(feature.values_.OKATO);
-
-            // console.log(layer);
-            
-            // map.addLayer(layer)
 
             return coords;
             
         })
 
-        map.addLayer(layer)
+        // map.addLayer(layer)
 
         pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
     })
 
-    let selected = null;
+    // let selected = null;
 
     // map.on('pointermove', function (e) {
     //     if (selected !== null) {
@@ -518,36 +517,6 @@ const fetchData = async () => {
     //     }
     //   });
 
-//     let currentFeature;
-// const displayFeatureInfo = function (pixel, target) {
-//   const feature = target.closest('.ol-control')
-//     ? undefined
-//     : map.forEachFeatureAtPixel(pixel, function (feature) {
-//         return feature;
-//       });
-//   if (feature) {
-//     info.style.left = pixel[0] + 'px';
-//     info.style.top = pixel[1] + 'px';
-//     if (feature !== currentFeature) {
-//       info.style.visibility = 'visible';
-//       info.innerText = feature.get('ECO_NAME');
-//     }
-//   } else {
-//     info.style.visibility = 'hidden';
-//   }
-//   currentFeature = feature;
-// };
-
-// map.on('pointermove', function (evt) {
-//   if (evt.dragging) {
-//     info.style.visibility = 'hidden';
-//     currentFeature = undefined;
-//     return;
-//   }
-//   displayFeatureInfo(evt.pixel, evt.originalEvent.target);
-// });
-    
-
     backButton.addEventListener('click', () => {
         backButton.style.display = 'none';
         // markers.forEach(marker => map.addLayer(marker));
@@ -557,11 +526,12 @@ const fetchData = async () => {
         });
         // mapPoints.forEach(marker => map.removeLayer(marker));
         // console.log('pointVector', pointVector);
-        console.log('map', map.getAllLayers());
+        // console.log('map', map.getAllLayers());
 
-        map.removeLayer(layerVectorLayer)
+        layerVectorLayer.setSource(null)
         
         pointSource.clear()
+        markerGenerator(districtsVectorSource, vectorSource)
         mapPoints = [];
     })
 }
