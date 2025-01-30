@@ -141,6 +141,24 @@ const handleHeatMap = (url, colors) => {
 
 const fetchData = async () => {
 
+    // Карта районов 
+    const districtsResponse = await fetch('./static/ao.geojson');
+    const districtsGeoJson = await districtsResponse.json();
+
+    const districtsVectorSource = new VectorSource({
+        features: new GeoJSON().readFeatures(districtsGeoJson, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857'
+        }),
+    });
+
+    const districtsVectorLayer = new VectorLayer({
+        source: districtsVectorSource,
+        style: styleFunction,
+    });
+
+
+
     /**
      * скачивание геоджесона (для районов Москвы)
      * @type {Response}
@@ -267,8 +285,9 @@ const fetchData = async () => {
             clipTile,
             ...heatmaps,
             baseTile,
+            districtsVectorLayer,
             clipVectorLayer,
-            baseVectorLayer,
+            // baseVectorLayer,
         ],
         view,
         controls: [],
@@ -303,8 +322,9 @@ const fetchData = async () => {
     /**
      * добавление маркеров на карту
      */
-    baseVectorSource.getFeatures().forEach((feature, idx) => {
-            if (feature.getGeometry().getType() === 'Polygon') {
+    districtsVectorSource.getFeatures().forEach((feature, idx) => {
+            // if (feature.getGeometry().getType() === 'Polygon') {
+            // console.log('feature', feature)
                 const coords = feature.getGeometry().getExtent();
                 const iconFeature = new Feature({
                     geometry: new Point([(coords[0] + coords[2]) / 2, (coords[1] + coords[3]) / 2])
@@ -354,7 +374,7 @@ const fetchData = async () => {
 
                 vectorSource.addFeatures([iconFeature])
                 
-            }
+            // }
         }
     )
 
@@ -367,7 +387,7 @@ const fetchData = async () => {
         if (lastFeature) {
             lastFeature.set('isActive', false);
         }
-        baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+        districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
             lastFeature = feature;
             feature.set('isActive', true)
         })
@@ -408,12 +428,36 @@ const fetchData = async () => {
 
     map.addLayer(pointVector);
 
+    let layerVectorLayer = undefined;
+
+    const fetchLayer = async (layer) => {
+        console.log('okato', layer);
+        
+        const layerResponse = await fetch(`./static/${layer}.geojson`);
+        const layerGeoJson = await layerResponse.json();
+    
+        const layerVectorSource = new VectorSource({
+            features: new GeoJSON().readFeatures(layerGeoJson, {
+                dataProjection: 'EPSG:4326',
+                featureProjection: 'EPSG:3857'
+            }),
+        });
+    
+        layerVectorLayer = new VectorLayer({
+            source: layerVectorSource,
+            style: styleFunction,
+        });
+
+        map.addLayer(layerVectorLayer)
+
+        return layerVectorLayer;
+    }
+
     /**
      * применение стилей + переход к нужному району на клик
      */
     map.on('click', (evt) => {
-        console.log('here')
-        const coords = baseVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+        const coords = districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
             map.getView().fit(feature.getGeometry(), {duration: 500});
             // lastFeature = feature;
 
@@ -423,12 +467,20 @@ const fetchData = async () => {
 
             const coords = feature.getGeometry().getExtent();
             
-            console.log('coords', coords, feature)
-            console.log('map layers',map.getAllLayers())
+            // console.log('coords', coords, feature)
+            // console.log('map layers',map.getAllLayers())
+
+            const layer = fetchLayer(feature.values_.OKATO);
+
+            // console.log(layer);
+            
+            // map.addLayer(layer)
 
             return coords;
             
         })
+
+        map.addLayer(layer)
 
         pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
     })
@@ -501,6 +553,8 @@ const fetchData = async () => {
         // mapPoints.forEach(marker => map.removeLayer(marker));
         // console.log('pointVector', pointVector);
         console.log('map', map.getAllLayers());
+
+        map.removeLayer(layerVectorLayer)
         
         pointSource.clear()
         mapPoints = [];
