@@ -17,12 +17,7 @@ import {throttle} from "lodash";
 import { FPS } from 'yy-fps'
 const fps = new FPS()
 
-// or if including the file directly:
-// const fps = FPS.FPS()
-
-// update function
 function update() {
-    // do stuff like rendering and dancing
 
     fps.frame()
 
@@ -362,7 +357,6 @@ const fetchData = async () => {
         source: vectorSource,
     });
 
-    // markers.push(vectorLayer);
     map.addLayer(vectorLayer);
 
     /**
@@ -415,10 +409,6 @@ const fetchData = async () => {
      */
     const backButton = document.getElementById('back_button');
 
-    // let pointVector = undefined;
-
-    
-
     const pointSource = new VectorSource({
         features: [createMarker(4161328, 7520469, '')],
     });
@@ -468,23 +458,14 @@ const fetchData = async () => {
     map.on('click', (evt) => {
         const coords = districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
             map.getView().fit(feature.getGeometry(), {duration: 500});
-            // lastFeature = feature;
-
             vectorSource.clear();
-
             feature.set('isActive', true);
-            // markers.forEach(marker => map.removeLayer(marker));
             backButton.style.display = 'block';
-
             const coords = feature.getGeometry().getExtent();
-
             const layer = fetchLayer(feature.values_.OKATO);
 
             return coords;
-            
         })
-
-        // map.addLayer(layer)
 
         pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
     })
@@ -519,20 +500,16 @@ const fetchData = async () => {
 
     backButton.addEventListener('click', () => {
         backButton.style.display = 'none';
-        // markers.forEach(marker => map.addLayer(marker));
         view.animate({
             zoom: 11,
             center: fromLonLat([37.618423, 55.751244]),
         });
-        // mapPoints.forEach(marker => map.removeLayer(marker));
-        // console.log('pointVector', pointVector);
-        // console.log('map', map.getAllLayers());
 
         layerVectorLayer.setSource(null)
         
         pointSource.clear()
-        markerGenerator(districtsVectorSource, vectorSource)
-        mapPoints = [];
+        markerGenerator(districtsVectorSource, vectorSource);
+
     })
 }
 
