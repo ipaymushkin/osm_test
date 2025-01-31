@@ -168,7 +168,6 @@ const style = new Style({
     }),
 });
 
-
 /**
  * функция генератор рандомных целых чисел
  * @param min
@@ -212,7 +211,6 @@ const handleHeatMap = (url, colors) => {
         source: new VectorSource({
             url,
             format: new KML({
-                extractStyles: false,
             }),
         }),
         blur: 100,
@@ -453,19 +451,35 @@ const fetchData = async () => {
     const backButton = document.getElementById('back_button');
 
     const pointSource = new VectorSource({
-        features: [createMarker(4161328, 7520469, '')],
+        // features: [createMarker(4161328, 7520469, '')],
     });
 
     const pointVector = new VectorLayer({
         source: pointSource,
-        style: new Style({
-            image: new Circle({
-                fill: new Fill({
-                    color: ['rgba(48,25,52,1)', 'rgba(139,128,0,1)', 'rgba(139,0,0,1)', "rgba(0,0,139,1)"][getRandomInt(0, 3)]
+        style: function (feature, resolution) {
+            return [new Style({
+                image: new Circle({
+                    fill: new Fill({
+                        color: ['rgba(48,25,52,1)', 'rgba(139,128,0,1)', 'rgba(139,0,0,1)', "rgba(0,0,139,1)"][getRandomInt(0, 3)]
+                    }),
+                    radius: getRandomInt(5, 20)
                 }),
-                radius: getRandomInt(5, 10)
-            }),
-        })
+            }), new Style({
+                image: new Circle({
+                    fill: new Fill({
+                        color: ['rgba(48,25,52,1)', 'rgba(139,128,0,1)', 'rgba(139,0,0,1)', "rgba(0,0,139,1)"][getRandomInt(0, 3)]
+                    }),
+                    radius: getRandomInt(5, 20)
+                }),
+            }), new Style({
+                image: new Circle({
+                    fill: new Fill({
+                        color: ['rgba(48,25,52,1)', 'rgba(139,128,0,1)', 'rgba(139,0,0,1)', "rgba(0,0,139,1)"][getRandomInt(0, 3)]
+                    }),
+                    radius: getRandomInt(5, 20)
+                }),
+            })][getRandomInt(0, 2)]
+          }, 
     });
 
     map.addLayer(pointVector);
@@ -495,22 +509,47 @@ const fetchData = async () => {
         return layerVectorLayer;
     }
 
+    let regionClicked = false;
+    let districtClicked = false;
+
     /**
      * применение стилей + переход к нужному району на клик
      */
     map.on('click', (evt) => {
-        const coords = districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
-            map.getView().fit(feature.getGeometry(), {duration: 500});
-            vectorSource.clear();
-            feature.set('isActive', true);
-            backButton.style.display = 'block';
-            const coords = feature.getGeometry().getExtent();
-            const layer = fetchLayer(feature.values_.OKATO);
+        if(!regionClicked) {
+            const coords = districtsVectorSource.forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+                map.getView().fit(feature.getGeometry(), {duration: 500});
+                vectorSource.clear();
+                feature.set('isActive', true);
+                backButton.style.display = 'block';
+                const coords = feature.getGeometry().getExtent();
+                const layer = fetchLayer(feature.values_.OKATO);
+    
+                return coords;
+            })
+        }
 
-            return coords;
-        })
+        if(!districtClicked) {
+            const coords = layerVectorLayer.getSource().forEachFeatureAtCoordinateDirect(evt.coordinate, feature => {
+                map.getView().fit(feature.getGeometry(), {duration: 500});
+                vectorSource.clear();
+                feature.set('isActive', true);
+                backButton.style.display = 'block';
 
-        pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
+                const coords = feature.getGeometry().getExtent();
+
+                pointSource.clear()
+
+                for(let i = 0; i < 30; i++) {
+                    pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
+                }
+    
+                return coords;
+            })
+
+        }
+
+        // pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
     })
 
     // let selected = null;
@@ -549,6 +588,9 @@ const fetchData = async () => {
         });
 
         layerVectorLayer.setSource(null)
+
+        districtClicked = false;
+        regionClicked = false;
         
         pointSource.clear()
         markerGenerator(districtsVectorSource, vectorSource);
