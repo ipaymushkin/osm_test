@@ -15,6 +15,46 @@ import {defaults as defaultInteractions} from 'ol/interaction';
 import {throttle} from "lodash";
 
 import { FPS } from 'yy-fps'
+import { Pane } from 'tweakpane';
+
+// tweakpane
+const PARAMS = {
+    layerInnerOpacity: .1,
+    layerBorderOpacity: .5,
+    layerStrokeWidth: 1,
+    layerActiveStrokeWidth: 4,
+    layerColor: {r: 255, g: 255, b: 255},
+    strokeColor: {r: 255, g: 255, b: 255, a: 0.5},
+    theme: 'dark',
+};
+
+const pane = new Pane();
+
+const layerColor = pane.addBinding(PARAMS, 'layerColor');
+// const strokeColor = pane.addBinding(PARAMS, 'strokeColor');
+
+const layerStrokeWidth = pane.addBinding(
+    PARAMS, 'layerStrokeWidth',
+    {min: 1, max: 10, step: 1}
+);
+
+const layerActiveStrokeWidth = pane.addBinding(
+    PARAMS, 'layerActiveStrokeWidth',
+    {min: 1, max: 10, step: 1}
+);
+
+const layerInnerOpacity = pane.addBinding(
+    PARAMS, 'layerInnerOpacity',
+    {min: 0, max: 1, step: .02}
+  );
+  
+// `options`: list
+const mapTheme = pane.addBinding(
+    PARAMS, 'theme',
+    {options: {Dark: 'dark', Light: 'light'}}
+);
+
+// FPS meter
 const fps = new FPS()
 
 function update() {
@@ -94,20 +134,20 @@ const styles = (feature) => {
     return ({
         'Polygon': new Style({
             stroke: new Stroke({
-                color: 'rgba(255, 255, 255, 0.3)',
-                width: isActive ? 4 : 1,
+                color: `rgba(255, 255, 255, 0.3)`,
+                width: isActive ? PARAMS.layerActiveStrokeWidth : PARAMS.layerStrokeWidth,
             }),
             fill: new Fill({
-                color: 'rgba(255, 255, 255, 0.1)',
+                color: `rgba(${PARAMS.layerColor.r},${PARAMS.layerColor.g}, ${PARAMS.layerColor.b}, ${PARAMS.layerInnerOpacity})`,
             }),
         }),
         'MultiPolygon': new Style({
             stroke: new Stroke({
                 color: 'rgba(255, 255, 255, 0.2)',
-                width: isActive ? 4 : 1,
+                width: isActive ? PARAMS.layerActiveStrokeWidth : PARAMS.layerStrokeWidth,
             }),
             fill: new Fill({
-                color: 'rgba(255, 255, 255, 0.1)',
+                color: `rgba(${PARAMS.layerColor.r},${PARAMS.layerColor.g}, ${PARAMS.layerColor.b}, ${PARAMS.layerInnerOpacity})`,
             }),
         }),
 
@@ -192,6 +232,8 @@ const handleHeatMap = (url, colors) => {
     return heatmap;
 }
 
+let districtsVectorLayer = undefined;
+
 const fetchData = async () => {
 
     // Карта районов 
@@ -205,7 +247,7 @@ const fetchData = async () => {
         }),
     });
 
-    const districtsVectorLayer = new VectorLayer({
+    districtsVectorLayer = new VectorLayer({
         source: districtsVectorSource,
         style: styleFunction,
     });
@@ -355,6 +397,7 @@ const fetchData = async () => {
 
     const vectorLayer = new VectorLayer({
         source: vectorSource,
+        // zIndex: 1
     });
 
     map.addLayer(vectorLayer);
@@ -515,8 +558,26 @@ const fetchData = async () => {
 
 fetchData();
 
+// TWEAKPANE INTERACTIONS
 
+layerInnerOpacity.on('change', (e) => {
+    PARAMS.layerInnerOpacity = e.value;
+    districtsVectorLayer.getSource().changed()
+  })
 
+layerActiveStrokeWidth.on('change', (e) => {
+    PARAMS.layerActiveStrokeWidth = e.value;
+    districtsVectorLayer.getSource().changed()
+})
 
+layerStrokeWidth.on('change', (e) => {
+    PARAMS.layerStrokeWidth = e.value;
+    districtsVectorLayer.getSource().changed()
+})
 
-
+layerColor.on('change', (e) => {
+    console.log('color',e.value);
+    
+    PARAMS.layerColor = e.value;
+    districtsVectorLayer.getSource().changed()
+})
