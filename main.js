@@ -6,16 +6,20 @@ import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from "ol/layer/Vector";
-import {Circle, Fill, Icon, Stroke, Style} from 'ol/style';
+import {Circle, Fill, Icon, Stroke, Style, Text} from 'ol/style';
 import {Point} from "ol/geom";
 import {Heatmap as HeatmapLayer} from 'ol/layer';
 import KML from 'ol/format/KML';
 import {getVectorContext} from 'ol/render';
 import {defaults as defaultInteractions} from 'ol/interaction';
 import {throttle} from "lodash";
+import Image from 'ol/layer/Image';
 
 import { FPS } from 'yy-fps'
 import { Pane } from 'tweakpane';
+
+import IDW from 'ol-ext/source/IDW'; 
+import Draw from 'ol/interaction/Draw';
 
 // tweakpane
 const PARAMS = {
@@ -196,6 +200,42 @@ const handleTile = (tile) => {
     });
 }
 
+const randomIntFromInterval = (min, max) => { 
+    // console.log(min, max)
+    // console.log(Math.random() * (max - min + 1) + min)
+    return Math.random() * (max - min + 1) + min;
+  }
+
+  
+    /**
+     * создание обрезанного слоя на основе обрезанного ветора
+     * @type {VectorLayer<VectorSource<Feature<import("../geom/Geometry.js").default>>, import("./BaseVector.js").ExtractedFeatureType<VectorSource<Feature<import("../geom/Geometry.js").default>>>>}
+     */
+
+
+    /**
+     * скачивание карты Москвы (общий полигон для Москвы без разбивки по районам)
+     * @type {Response}
+     */
+    const clipResponse = await fetch('./static/moscow_full.geojson');
+    const clipGeoJson = await clipResponse.json();
+
+    /**
+     * создание обрезанного вектора на основе геоджесона (общий полигон для Москвы без разбивки по районам)
+     * @type {VectorSource<Feature<import("../geom/Geometry.js").default>>}
+     */
+    const clipVectorSource = new VectorSource({
+        features: new GeoJSON().readFeatures(clipGeoJson, {
+            dataProjection: 'EPSG:4326',
+            featureProjection: 'EPSG:3857'
+        }),
+    });
+
+    const clipVectorLayer = new VectorLayer({
+        source: clipVectorSource,
+        style: styleFunction,
+    });
+
 /**
  * функция обработки хитмапы
  * @param url
@@ -207,25 +247,44 @@ const handleHeatMap = (url, colors) => {
      * создание хитмапы из kml файла
      * @type {Heatmap<import("../Feature.js").default<import("../geom.js").Geometry>, VectorSource<import("../Feature.js").default<import("../geom.js").Geometry>>>}
      */
+    const source = new VectorSource();
+
     const heatmap = new HeatmapLayer({
-        source: new VectorSource({
-            url,
-            format: new KML({
-            }),
-        }),
+        source: source,
         blur: 100,
         radius: Math.floor((Math.random() + 0.5) * 150),
-        weight: (feature) => {
-            const name = feature.get('name');
-            const magnitude = parseFloat(name.substr(2));
-            return magnitude - 5;
-        },
+        // weight: (feature) => {
+        //     const name = feature.get('name');
+        //     const magnitude = parseFloat(name.substr(2));
+        //     return magnitude - 5;
+        // },
+        gradient: colors,
+        opacity: 0.7,
+        extent: clipVectorLayer.getSource().getExtent()
     });
+
+    console.log(clipVectorLayer.getSource().getExtent());
+    
+
+    
+    for(let i = 0; i < 20; i++) {
+        const point = new Point(fromLonLat([randomIntFromInterval(36.7, 37.2),randomIntFromInterval(55.5, 55.8)]));
+        const pointFeature = new Feature({
+            geometry: point,
+            weight: randomIntFromInterval(1, 200),
+        });
+    
+        source.addFeature(pointFeature)
+    }
+
+    
 
     /**
      * задание цвета для хитмапы
      */
-    heatmap.setGradient(colors);
+    // heatmap.setGradient(colors);
+    // heatmap.setBlur(0);
+    heatmap.setMaxZoom(12);
 
     return heatmap;
 }
@@ -285,6 +344,7 @@ const fetchData = async () => {
      */
     const baseTile = new TileLayer({
         source: new OSM(),
+        background: 'none',
     });
 
     /**
@@ -293,10 +353,13 @@ const fetchData = async () => {
      */
     const clipTile = new TileLayer({
         source: new OSM(),
+        background: 'none',
     });
 
     handleTile(baseTile);
     handleTile(clipTile);
+
+    
 
     const heatmaps = [
         handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
@@ -306,34 +369,63 @@ const fetchData = async () => {
         handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
         handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
         handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
+        // handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
+        // handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
+        // handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
+        // handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
+        // handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
+        // handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
+        // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
+        // handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
+        // handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
+        // handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
+        // handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
+        // handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
+        // handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
+        // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
     ];
 
-    /**
-     * скачивание карты Москвы (общий полигон для Москвы без разбивки по районам)
-     * @type {Response}
-     */
-    const clipResponse = await fetch('./static/moscow_full.geojson');
-    const clipGeoJson = await clipResponse.json();
-
-    /**
-     * создание обрезанного вектора на основе геоджесона (общий полигон для Москвы без разбивки по районам)
-     * @type {VectorSource<Feature<import("../geom/Geometry.js").default>>}
-     */
-    const clipVectorSource = new VectorSource({
-        features: new GeoJSON().readFeatures(clipGeoJson, {
-            dataProjection: 'EPSG:4326',
-            featureProjection: 'EPSG:3857'
-        }),
+    
+    const idw = new IDW({
+        /* Use workers * /
+    useWorker: true,
+    lib: {
+      // A set of function accessible in the worker
+      hue2rgb: function(h) {
+        h = (h + 6) % 6;
+        if (h < 1) return Math.round(h * 255);
+        if (h < 3) return 255;
+        if (h < 4) return Math.round((4 - h) * 255);
+        return 0;
+      }
+    },
+    getColor: function(v) {
+      // Get hue
+      var h = 4 - (0.04 * v);
+      // Convert to RGB
+      return [
+        hue2rgb(h + 2),
+        hue2rgb(h),
+        hue2rgb(h - 2),
+        255
+      ];
+    },
+    /**/
+    // scale: 8,
+    // maxD: 1000000,
+    // Source that contains the data
+    source: new VectorSource(),
+    // Use val as weight property
+    weight: 'val'
     });
 
-    /**
-     * создание обрезанного слоя на основе обрезанного ветора
-     * @type {VectorLayer<VectorSource<Feature<import("../geom/Geometry.js").default>>, import("./BaseVector.js").ExtractedFeatureType<VectorSource<Feature<import("../geom/Geometry.js").default>>>>}
-     */
-    const clipVectorLayer = new VectorLayer({
-        source: clipVectorSource,
-        style: styleFunction,
-    });
+    const idwImageLayer = new Image({
+        title: 'idw',
+        source: idw,
+        opacity: 0.5,
+    })
+
+
 
     /**
      * обрезка базового тайла (вырезание из карты города Москва)
@@ -374,6 +466,7 @@ const fetchData = async () => {
      */
     const map = new Map({
         target: 'map',
+        renderer: 'canvas',
         layers: [
             clipTile,
             ...heatmaps,
@@ -381,11 +474,12 @@ const fetchData = async () => {
             districtsVectorLayer,
             clipVectorLayer,
             // baseVectorLayer,
+            idwImageLayer, 
         ],
         view,
         controls: [],
         interactions: defaultInteractions({
-            mouseWheelZoom: false
+            mouseWheelZoom: false,
         })
     });
 
@@ -596,9 +690,51 @@ const fetchData = async () => {
         markerGenerator(districtsVectorSource, vectorSource);
 
     })
+
+    // map.addLayer(new VectorSource({
+    //     title: 'source',
+    //     source: idw.getSource(),
+    //     style: function(f) {
+    //       return new Style({
+    //         // image: new ol.style.Circle({ radius: 2, fill: new ol.style.Fill({ color: '#000' }) }),
+    //         text: new Text({
+    //           text: f.get('val').toString(),
+    //           stroke: new Stroke({ color: [255,255,255,128], width: 1.25 }),
+    //         })
+    //       });
+    //     }
+    //   }))
+    
+      var draw = new Draw({ type: 'Point', source: idw.getSource() });
+    //   draw.on('drawend', function(e) {
+    //     console.log('here', e);
+        
+    //     e.feature.set('val', Math.round(Math.random()*100));
+    //   })
+      map.addInteraction(draw);
+    
+      // Add a set of features
+      function addFeatures(size) {
+        size = size || 100;
+        var ext = map.getView().calculateExtent();
+        var dx = ext[2]-ext[0];
+        var dy = ext[3]-ext[1];
+        var features = [];
+        for (var i=0; i<size; ++i){
+          var f = new ol.Feature(new ol.geom.Point([
+            ext[0]+dx*Math.random(), 
+            ext[1]+dy*Math.random()
+          ]));
+          f.set('val', Math.round(Math.random()*100));
+          features.push(f);
+        }
+        idw.getSource().addFeatures(features)
+      }
 }
 
 fetchData();
+
+
 
 // TWEAKPANE INTERACTIONS
 
