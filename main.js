@@ -179,6 +179,7 @@ const style = new Style({
  * @returns {number}
  */
 const getRandomInt = (min, max) => Math.floor(Math.random() * (max - min + 1) + min);
+const getRandomFloat = (min, max) => Math.random() * (max - min + 1) + min;
 
 /**
  * наложение стилей на тайл
@@ -201,8 +202,6 @@ const handleTile = (tile) => {
 }
 
 const randomIntFromInterval = (min, max) => { 
-    // console.log(min, max)
-    // console.log(Math.random() * (max - min + 1) + min)
     return Math.random() * (max - min + 1) + min;
   }
 
@@ -385,9 +384,27 @@ const fetchData = async () => {
         // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
     ];
 
+    const getIdwFeatures = () => {
+        const features = [];
+
+        for(let i = 0; i < 50; i++) {
+            features.push(new Feature({
+                geometry: new Point(
+                    fromLonLat([randomIntFromInterval(37.3, 37.4), randomIntFromInterval(55.42, 55.46)])),
+                    'val': getRandomInt(1, 255),
+            }))
+        }
+
+        return features
+    }
+
+    const idwSource = new VectorSource({
+        features: getIdwFeatures()
+    })
+    // idwSource.getFeatures()[0].set('val', Math.round(Math.random()*100), true);
     
     const idw = new IDW({
-        /* Use workers * /
+    /* Use workers */
     useWorker: true,
     lib: {
       // A set of function accessible in the worker
@@ -401,7 +418,9 @@ const fetchData = async () => {
     },
     getColor: function(v) {
       // Get hue
-      var h = 4 - (0.04 * v);
+      var h = 40 - (0.04 * v);
+    //   console.log('v', v);
+      
       // Convert to RGB
       return [
         hue2rgb(h + 2),
@@ -409,20 +428,26 @@ const fetchData = async () => {
         hue2rgb(h - 2),
         255
       ];
+    //   return [
+    //     hue2rgb(h + 2),
+    //     hue2rgb(h),
+    //     hue2rgb(h - 2),
+    //     255
+    //   ];
     },
     /**/
-    // scale: 8,
-    // maxD: 1000000,
+    scale: 4,
+    maxD: 100000,
     // Source that contains the data
-    source: new VectorSource(),
+    source: idwSource,
     // Use val as weight property
-    weight: 'val'
+    weight: 'val',
     });
 
     const idwImageLayer = new Image({
         title: 'idw',
         source: idw,
-        opacity: 0.5,
+        opacity: 0.2,
     })
 
 
@@ -474,7 +499,7 @@ const fetchData = async () => {
             districtsVectorLayer,
             clipVectorLayer,
             // baseVectorLayer,
-            idwImageLayer, 
+            // idwImageLayer, 
         ],
         view,
         controls: [],
@@ -706,30 +731,33 @@ const fetchData = async () => {
     //   }))
     
       var draw = new Draw({ type: 'Point', source: idw.getSource() });
-    //   draw.on('drawend', function(e) {
-    //     console.log('here', e);
+    //   draw.feature.set('val', 22)
+      draw.on('drawend', function(e) {
+        console.log('here',e,  e.feature, draw);
+        console.log('here--', idw.getSource(), idw.getSource().getFeatures());
         
-    //     e.feature.set('val', Math.round(Math.random()*100));
-    //   })
+        // e.feature.set('val', Math.round(Math.random()*100));
+        e.feature.set('val', Math.round(Math.random()*100));
+      })
       map.addInteraction(draw);
     
       // Add a set of features
-      function addFeatures(size) {
-        size = size || 100;
-        var ext = map.getView().calculateExtent();
-        var dx = ext[2]-ext[0];
-        var dy = ext[3]-ext[1];
-        var features = [];
-        for (var i=0; i<size; ++i){
-          var f = new ol.Feature(new ol.geom.Point([
-            ext[0]+dx*Math.random(), 
-            ext[1]+dy*Math.random()
-          ]));
-          f.set('val', Math.round(Math.random()*100));
-          features.push(f);
-        }
-        idw.getSource().addFeatures(features)
-      }
+    //   function addFeatures(size) {
+    //     size = size || 100;
+    //     var ext = map.getView().calculateExtent();
+    //     var dx = ext[2]-ext[0];
+    //     var dy = ext[3]-ext[1];
+    //     var features = [];
+    //     for (var i=0; i<size; ++i){
+    //       var f = new ol.Feature(new ol.geom.Point([
+    //         ext[0]+dx*Math.random(), 
+    //         ext[1]+dy*Math.random()
+    //       ]));
+    //       f.set('val', Math.round(Math.random()*100));
+    //       features.push(f);
+    //     }
+    //     idw.getSource().addFeatures(features)
+    //   }
 }
 
 fetchData();
