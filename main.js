@@ -476,6 +476,15 @@ const fetchData = async () => {
         e.context.globalCompositeOperation = 'source-over';
     });
 
+    idwImageLayer.on('postrender', function (e) {
+        const vectorContext = getVectorContext(e);
+        e.context.globalCompositeOperation = 'destination-in';
+        clipVectorLayer.getSource().forEachFeature(function (feature) {
+            vectorContext.drawFeature(feature, style);
+        });
+        e.context.globalCompositeOperation = 'source-over';
+    });
+
     /**
      * создание вью для карты
      * @type {View}
@@ -494,12 +503,12 @@ const fetchData = async () => {
         renderer: 'canvas',
         layers: [
             clipTile,
-            ...heatmaps,
+            // ...heatmaps,
+            idwImageLayer, 
             baseTile,
             districtsVectorLayer,
             clipVectorLayer,
             // baseVectorLayer,
-            // idwImageLayer, 
         ],
         view,
         controls: [],
@@ -782,8 +791,6 @@ layerStrokeWidth.on('change', (e) => {
 })
 
 layerColor.on('change', (e) => {
-    console.log('color',e.value);
-    
     PARAMS.layerColor = e.value;
     districtsVectorLayer.getSource().changed()
 })
