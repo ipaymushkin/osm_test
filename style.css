@@ -31,3 +31,35 @@ html, body {
 .control label {
   color: white;
 }
+
+body {
+  background: #242F40;
+}
+
+.buttons {
+  display: flex;
+  gap: 16px;
+}
+
+.buttons a {
+  background-color: #CCA43B;
+  padding: 10px 15px;
+  border-radius: 10px;
+  color: black;
+  text-decoration: none;
+}
+
+.buttons a:hover {
+  background: #e4b746;
+}
+
+.container {
+  height: 100%;
+  width: 100%;
+  max-width: 100% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+}
