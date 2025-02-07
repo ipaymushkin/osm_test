@@ -436,25 +436,25 @@ const randomIntFromInterval = (min, max) => {
             })
 
             const idw = new IDW({
-                useWorker: true,
-                lib: {
-                    hue2rgb: function (h) {
-                        h = (h + 6) % 6;
-                        if (h < 1) return Math.round(h * 255);
-                        if (h < 3) return 255;
-                        if (h < 4) return Math.round((4 - h) * 255);
-                        return 0;
-                    }
-                },
-                getColor: function (v) {
-                    var h = 40 - (0.04 * v);
-                    return [
-                        hue2rgb(h + 2),
-                        hue2rgb(h),
-                        hue2rgb(h - 2),
-                        255
-                    ];
-                },
+                // useWorker: true,
+                // lib: {
+                //     hue2rgb: function (h) {
+                //         h = (h + 6) % 6;
+                //         if (h < 1) return Math.round(h * 255);
+                //         if (h < 3) return 255;
+                //         if (h < 4) return Math.round((4 - h) * 255);
+                //         return 0;
+                //     }
+                // },
+                // getColor: function (v) {
+                //     var h = 40 - (0.04 * v);
+                //     return [
+                //         hue2rgb(h + 2),
+                //         hue2rgb(h),
+                //         hue2rgb(h - 2),
+                //         255
+                //     ];
+                // },
                 scale: 2,
                 maxD: getRandomInt(1000, 5000),
                 source: idwSource,
