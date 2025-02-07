@@ -1,8 +1,8 @@
 import './style.css';
 import {Feature, Map, View} from 'ol';
-import TileLayer from 'ol/layer/Tile';
-// import OSM from 'ol/source/OSM';
-import StadiaMaps from 'ol/source/StadiaMaps';
+import TileLayer from 'ol/layer/Tile.js';
+import OSM from 'ol/source/OSM';
+// import StadiaMaps from 'ol/source/StadiaMaps';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
@@ -188,19 +188,19 @@ const getRandomFloat = (min, max) => Math.random() * (max - min + 1) + min;
  * тормозит из-за filter
  */
 const handleTile = (tile) => {
-    // tile.on('prerender', (evt) => {
-    //     if (evt.context) {
-    //         const context = evt.context;
-    //         context.filter = 'grayscale(80%) invert(100%) hue-rotate(0deg)';
-    //         context.globalCompositeOperation = 'source-over';
-    //     }
-    // });
-    // tile.on('postrender', (evt) => {
-    //     if (evt.context) {
-    //         const context = evt.context;
-    //         context.filter = 'none';
-    //     }
-    // });
+    tile.on('prerender', (evt) => {
+        if (evt.context) {
+            const context = evt.context;
+            context.filter = 'grayscale(80%) invert(100%) hue-rotate(0deg)';
+            context.globalCompositeOperation = 'source-over';
+        }
+    });
+    tile.on('postrender', (evt) => {
+        if (evt.context) {
+            const context = evt.context;
+            context.filter = 'none';
+        }
+    });
 }
 
 const randomIntFromInterval = (min, max) => {
@@ -337,47 +337,47 @@ const randomIntFromInterval = (min, max) => {
         //     style: styleFunction,
         // });
 
-        // /**
-        //  * создание базового тайла (вся карта мира, но без карты Москвы)
-        //  * @type {TileLayer<OSM>}
-        //  */
-        // const baseTile = new TileLayer({
-        //     source: new OSM(),
-        //     background: 'none',
-        // });
+        /**
+         * создание базового тайла (вся карта мира, но без карты Москвы)
+         * @type {TileLayer<OSM>}
+         */
+        const baseTile = new TileLayer({
+            source: new OSM(),
+            background: 'none',
+        });
 
         /**
          * создание базового тайла (вся карта мира, но без карты Москвы)
          * @type {TileLayer<StadiaMaps>}
          */
-        const baseTile = new TileLayer({
-            source: new StadiaMaps({
-                layer: 'alidade_smooth_dark',
-                retina: true,
-            }),
-            background: 'none',
-        });
-
-        // /**
-        //  * создание обрезанного тайла (только карта Москвы)
-        //  * @type {TileLayer<OSM>}
-        //  */
-        // const clipTile = new TileLayer({
-        //     source: new OSM(),
+        // const baseTile = new TileLayer({
+        //     source: new StadiaMaps({
+        //         layer: 'alidade_smooth_dark',
+        //         retina: true,
+        //     }),
         //     background: 'none',
         // });
 
         /**
          * создание обрезанного тайла (только карта Москвы)
-         * @type {TileLayer<StadiaMaps>}
+         * @type {TileLayer<OSM>}
          */
         const clipTile = new TileLayer({
-            source: new StadiaMaps({
-                layer: 'alidade_smooth_dark',
-                retina: true,
-            }),
+            source: new OSM(),
             background: 'none',
         });
+
+        // /**
+        //  * создание обрезанного тайла (только карта Москвы)
+        //  * @type {TileLayer<StadiaMaps>}
+        //  */
+        // const clipTile = new TileLayer({
+        //     source: new StadiaMaps({
+        //         layer: 'alidade_smooth_dark',
+        //         retina: true,
+        //     }),
+        //     background: 'none',
+        // });
 
 
 
