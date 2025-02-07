@@ -350,7 +350,7 @@ const randomIntFromInterval = (min, max) => {
          * создание базового тайла (вся карта мира, но без карты Москвы)
          * @type {TileLayer<StadiaMaps>}
          */
-        // const baseTile = new TileLayer({
+        // const baseTileStadia = new TileLayer({
         //     source: new StadiaMaps({
         //         layer: 'alidade_smooth_dark',
         //         retina: true,
@@ -371,7 +371,7 @@ const randomIntFromInterval = (min, max) => {
         //  * создание обрезанного тайла (только карта Москвы)
         //  * @type {TileLayer<StadiaMaps>}
         //  */
-        // const clipTile = new TileLayer({
+        // const clipTileStadia = new TileLayer({
         //     source: new StadiaMaps({
         //         layer: 'alidade_smooth_dark',
         //         retina: true,
@@ -380,9 +380,12 @@ const randomIntFromInterval = (min, max) => {
         // });
 
 
-
-        handleTile(baseTile);
-        handleTile(clipTile);
+        if((window.type === 1) || (window.type === 3) || (window.type === 5)) {
+            console.log('here', window.type);
+            
+            handleTile(baseTile);
+            handleTile(clipTile);
+        }
 
 
         const heatmaps = [
@@ -393,20 +396,6 @@ const randomIntFromInterval = (min, max) => {
             handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
             handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
             handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
-            // handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
-            // handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
-            // handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
-            // handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
-            // handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
-            // handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
-            // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
-            // handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
-            // handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
-            // handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
-            // handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
-            // handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
-            // handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
-            // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
         ];
 
         const getIdwFeatures = () => {
@@ -427,7 +416,6 @@ const randomIntFromInterval = (min, max) => {
         const idwSource = new VectorSource({
             features: getIdwFeatures()
         })
-        // idwSource.getFeatures()[0].set('val', Math.round(Math.random()*100), true);
 
         const idw = new IDW({
             /* Use workers */
@@ -445,8 +433,6 @@ const randomIntFromInterval = (min, max) => {
             getColor: function (v) {
                 // Get hue
                 var h = 40 - (0.04 * v);
-                //   console.log('v', v);
-
                 // Convert to RGB
                 return [
                     hue2rgb(h + 2),
@@ -454,16 +440,10 @@ const randomIntFromInterval = (min, max) => {
                     hue2rgb(h - 2),
                     255
                 ];
-                //   return [
-                //     hue2rgb(h + 2),
-                //     hue2rgb(h),
-                //     hue2rgb(h - 2),
-                //     255
-                //   ];
             },
             /**/
-            scale: 10,
-            maxD: 5000,
+            scale: 8,
+            maxD: 10000000,
             // Source that contains the data
             source: idwSource,
             // Use val as weight property
@@ -473,7 +453,7 @@ const randomIntFromInterval = (min, max) => {
         const idwImageLayer = new Image({
             title: 'idw',
             source: idw,
-            opacity: 0.2,
+            opacity: 0.15,
         })
 
         const list = Array(50).fill(0).map(() => {
@@ -515,7 +495,7 @@ const randomIntFromInterval = (min, max) => {
                     //   ];
                 },
                 /**/
-                scale: 10,
+                scale: 2,
                 maxD: getRandomInt(1000, 5000),
                 // Source that contains the data
                 source: idwSource,
@@ -563,6 +543,62 @@ const randomIntFromInterval = (min, max) => {
         //     e.context.globalCompositeOperation = 'source-over';
         // });
 
+        const handleLayers = () => {
+            switch(window.type) {
+                case 1:
+                    return [
+                        clipTile,
+                        ...heatmaps,
+                        baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+                case 2:
+                    return [
+                        clipTile,
+                        ...heatmaps,
+                        baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+                case 3:
+                    return [
+                        clipTile,
+                        ...list,
+                        baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+                case 4:
+                    return [
+                        clipTile,
+                        ...list,
+                        baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+                case 5:
+                    return [
+                        clipTile,
+                        idwImageLayer,
+                        baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+            }
+
+            // return [
+            //     clipTile,
+            //     // ...heatmaps,
+            //     // idwImageLayer,
+            //     ...list,
+            //     baseTile,
+            //     districtsVectorLayer,
+            //     clipVectorLayer,
+            //     // baseVectorLayer,
+            // ]
+        }
+
         /**
          * создание вью для карты
          * @type {View}
@@ -579,17 +615,7 @@ const randomIntFromInterval = (min, max) => {
         const map = new Map({
             target: 'map',
             renderer: 'canvas',
-            layers: [
-                clipTile,
-                // ...heatmaps,
-                // ...heatmaps,
-                // idwImageLayer,
-                ...list,
-                baseTile,
-                districtsVectorLayer,
-                clipVectorLayer,
-                // baseVectorLayer,
-            ],
+            layers: handleLayers(),
             view,
             controls: [],
             interactions: defaultInteractions({
