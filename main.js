@@ -418,35 +418,9 @@ const randomIntFromInterval = (min, max) => {
         })
 
         const idw = new IDW({
-            /* Use workers */
-            useWorker: true,
-            lib: {
-                // A set of function accessible in the worker
-                hue2rgb: function (h) {
-                    h = (h + 6) % 6;
-                    if (h < 1) return Math.round(h * 255);
-                    if (h < 3) return 255;
-                    if (h < 4) return Math.round((4 - h) * 255);
-                    return 0;
-                }
-            },
-            getColor: function (v) {
-                // Get hue
-                var h = 40 - (0.04 * v);
-                // Convert to RGB
-                return [
-                    hue2rgb(h + 2),
-                    hue2rgb(h),
-                    hue2rgb(h - 2),
-                    255
-                ];
-            },
-            /**/
             scale: 8,
             maxD: 10000000,
-            // Source that contains the data
             source: idwSource,
-            // Use val as weight property
             weight: 'val',
         });
 
@@ -460,13 +434,10 @@ const randomIntFromInterval = (min, max) => {
             const idwSource = new VectorSource({
                 features: getIdwFeatures()
             })
-            // idwSource.getFeatures()[0].set('val', Math.round(Math.random()*100), true);
 
             const idw = new IDW({
-                /* Use workers */
                 useWorker: true,
                 lib: {
-                    // A set of function accessible in the worker
                     hue2rgb: function (h) {
                         h = (h + 6) % 6;
                         if (h < 1) return Math.round(h * 255);
@@ -476,30 +447,17 @@ const randomIntFromInterval = (min, max) => {
                     }
                 },
                 getColor: function (v) {
-                    // Get hue
                     var h = 40 - (0.04 * v);
-                    //   console.log('v', v);
-
-                    // Convert to RGB
                     return [
                         hue2rgb(h + 2),
                         hue2rgb(h),
                         hue2rgb(h - 2),
                         255
                     ];
-                    //   return [
-                    //     hue2rgb(h + 2),
-                    //     hue2rgb(h),
-                    //     hue2rgb(h - 2),
-                    //     255
-                    //   ];
                 },
-                /**/
                 scale: 2,
                 maxD: getRandomInt(1000, 5000),
-                // Source that contains the data
                 source: idwSource,
-                // Use val as weight property
                 weight: 'val',
             });
             return new Image({
