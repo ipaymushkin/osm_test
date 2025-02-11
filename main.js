@@ -255,7 +255,7 @@ const randomIntFromInterval = (min, max) => {
         const heatmap = new HeatmapLayer({
             source: source,
             blur: 80,
-            radius: 80,
+            radius: getRandomInt(40,100),
             weight: (feature) => {
                 // const name = feature.get('name');
                 // const magnitude = parseFloat(name.substr(2));
@@ -263,14 +263,14 @@ const randomIntFromInterval = (min, max) => {
             },
             gradient: colors,
             opacity: 0.9,
-            extent: clipVectorLayer.getSource().getExtent(),
+            // extent: clipVectorLayer.getSource().getExtent(),
             declutter: true,
-            maxResolution: 1920,
-            minResolution: 1,
+            // maxResolution: 100,
+            // minResolution: 1,
         });
 
         for (let i = 0; i < 30; i++) {
-            const point = new Point(fromLonLat([getRandomFloat(36.89, 36.9), getRandomFloat(55.56, 55.6)]));
+            const point = new Point(fromLonLat([getRandomFloat(36.896666, 36.898), getRandomFloat(55.2, 54.9)]));
             const pointFeature = new Feature({
                 geometry: point,
                 weight: getRandomFloat(0.5, 1),
