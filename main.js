@@ -82,41 +82,48 @@ const markerGenerator = (sourceFrom, sourceTo) => {
 
             const svg = `<svg version="1.1" xmlns="http://www.w3.org/2000/svg" height="150px" width="150px" viewBox="0 0 20 20">
 
-            <circle r="5" cx="10" cy="10" fill="transparent"
+            <circle r="9" cx="10" cy="10" fill="transparent"
                       stroke="rgba(100, 223, 230, 1)"
-                      stroke-width="10"
+                      stroke-width="2"
+                      stroke-linecap="round"
                       stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
                 stroke-dashoffset="-${Math.floor((Math.random()) * 30)}"
             />
             
-            <circle r="5" cx="10" cy="10" fill="transparent"
+            <circle r="9" cx="10" cy="10" fill="transparent"
                       stroke="rgba(235, 121, 87, 1)"
-                      stroke-width="10"
-                      stroke-dasharray="calc(50 * 31.42 / 100) 31.42" /> 
-                      stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
-            <circle r="5" cx="10" cy="10" fill="transparent"
-                      stroke="rgba(108, 22, 247, 1)"
-                      stroke-width="10"
+                      stroke-width="2"
                       stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                      stroke-linecap="round"
+                      stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}" 
+            />
+
+            <circle r="9" cx="10" cy="10" fill="transparent"
+                      stroke="rgba(108, 22, 247, 1)"
+                      stroke-width="2"
+                      stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                      stroke-linecap="round"
                         stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
             />
-            <circle r="5" cx="10" cy="10" fill="transparent"
+
+            <circle r="9" cx="10" cy="10" fill="transparent"
                     stroke="rgba(245, 194, 69, 1)"
-                    stroke-width="10"
+                    stroke-width="2"
                     stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
+                    stroke-linecap="round"
                     stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
             />
             
             <circle r="8" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
            
-            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="5px" fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold">${getRandomInt(1, 1000)}</text>
+            <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-size="3px" fill="white" font-family="Arial, Helvetica, sans-serif" font-weight="bold">${getRandomInt(1, 1000)}</text>
             </svg>`;
 
             const style = new Style({
                 image: new Icon({
                     opacity: 1,
                     src: 'data:image/svg+xml;utf8,' + svg,
-                    scale: 0.3
+                    scale: 0.6
                 })
             });
 
@@ -254,7 +261,7 @@ const randomIntFromInterval = (min, max) => {
 
         const heatmap = new HeatmapLayer({
             source: source,
-            blur: 80,
+            blur: 70,
             radius: getRandomInt(40,100),
             weight: (feature) => {
                 // const name = feature.get('name');
@@ -262,7 +269,7 @@ const randomIntFromInterval = (min, max) => {
                 // return Math.random();
             },
             gradient: colors,
-            opacity: 0.9,
+            opacity: 0.95,
             // extent: clipVectorLayer.getSource().getExtent(),
             declutter: true,
             // maxResolution: 100,
