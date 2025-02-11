@@ -4,7 +4,7 @@ import TileLayer from 'ol/layer/Tile.js';
 import OSM from 'ol/source/OSM';
 // import StadiaMaps from 'ol/source/StadiaMaps';
 import VectorSource from 'ol/source/Vector';
-import {fromLonLat} from "ol/proj";
+import {fromLonLat, toLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
 import VectorLayer from "ol/layer/Vector";
 import {Circle, Fill, Icon, Stroke, Style, Text} from 'ol/style';
@@ -237,6 +237,7 @@ const randomIntFromInterval = (min, max) => {
         source: clipVectorSource,
         style: styleFunction,
     });
+    
 
     /**
      * функция обработки хитмапы
@@ -253,26 +254,26 @@ const randomIntFromInterval = (min, max) => {
 
         const heatmap = new HeatmapLayer({
             source: source,
-            blur: 100,
-            radius: Math.floor((Math.random() + 0.5) * 150),
-            // weight: (feature) => {
-            //     const name = feature.get('name');
-            //     const magnitude = parseFloat(name.substr(2));
-            //     return magnitude - 5;
-            // },
+            blur: 80,
+            radius: 80,
+            weight: (feature) => {
+                // const name = feature.get('name');
+                // const magnitude = parseFloat(name.substr(2));
+                // return Math.random();
+            },
             gradient: colors,
-            opacity: 0.7,
-            extent: clipVectorLayer.getSource().getExtent()
+            opacity: 0.9,
+            extent: clipVectorLayer.getSource().getExtent(),
+            declutter: true,
+            maxResolution: 1920,
+            minResolution: 1,
         });
 
-        // console.log(clipVectorLayer.getSource().getExtent());
-
-
-        for (let i = 0; i < 20; i++) {
-            const point = new Point(fromLonLat([randomIntFromInterval(36.7, 37.2), randomIntFromInterval(55.5, 55.8)]));
+        for (let i = 0; i < 30; i++) {
+            const point = new Point(fromLonLat([getRandomFloat(36.89, 36.9), getRandomFloat(55.56, 55.6)]));
             const pointFeature = new Feature({
                 geometry: point,
-                weight: randomIntFromInterval(1, 200),
+                weight: getRandomFloat(0.5, 1),
             });
 
             source.addFeature(pointFeature)
@@ -381,21 +382,19 @@ const randomIntFromInterval = (min, max) => {
 
 
         if((window.type === 1) || (window.type === 3) || (window.type === 5)) {
-            console.log('here', window.type);
-            
             handleTile(baseTile);
             handleTile(clipTile);
         }
 
 
         const heatmaps = [
-            handleHeatMap('./static/HeatMap.kml', ['#e1823e', '#f93519']),
-            handleHeatMap('./static/HeatMap2.kml', ['#596fb8', '#821bf1']),
-            handleHeatMap('./static/HeatMap3.kml', ['#E37D33', '#CE7647']),
-            handleHeatMap('./static/HeatMap4.kml', ['#8B13CB', '#8B13CB']),
-            handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
-            handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
-            handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
+            handleHeatMap('./static/HeatMap4.kml', ['#669ACA', '#669ACA']),
+            handleHeatMap('./static/HeatMap3.kml', ['#690095', '#690095']),
+            handleHeatMap('./static/HeatMap2.kml', ['#FF7500', '#FF7500']),
+            handleHeatMap('./static/HeatMap.kml', ['#CD2A00', '#CD2A00']),
+            // handleHeatMap('./static/HeatMap5.kml', ['#E6943E', '#E6943E']),
+            // handleHeatMap('./static/HeatMap6.kml', ['#D73914', '#D73914']),
+            // handleHeatMap('./static/HeatMap7.kml', ['#596fb8', '#821bf1']),
         ];
 
         const getIdwFeatures = () => {
@@ -627,7 +626,7 @@ const randomIntFromInterval = (min, max) => {
                 feature.set('isActive', true)
             })
         }
-        map.on('pointermove', throttle(handleMove, 100));
+        // map.on('pointermove', throttle(handleMove, 100));
 
         const createMarker = (lng, lat, id) => {
             return new Feature({
@@ -744,6 +743,12 @@ const randomIntFromInterval = (min, max) => {
             // pointSource.addFeature(createMarker(getRandomInt(coords[0] + (coords[2] - coords[0]), coords[2] - (coords[2] - coords[0])), getRandomInt(coords[1] + (coords[3] - coords[1]), coords[3] - (coords[3] - coords[1])), ''))
         })
 
+        const mapExtent = map.getView().calculateExtent()
+
+        console.log(mapExtent);
+        console.log(toLonLat([mapExtent[0], mapExtent[1]]));
+        console.log(toLonLat([mapExtent[2], mapExtent[3]]));
+
         // let selected = null;
 
         // map.on('pointermove', function (e) {
@@ -834,6 +839,9 @@ const randomIntFromInterval = (min, max) => {
     }
 
     fetchData();
+
+
+    
 
 
 // TWEAKPANE INTERACTIONS
