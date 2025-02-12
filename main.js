@@ -111,7 +111,7 @@ const markerGenerator = (sourceFrom, sourceTo) => {
                     stroke-width="2"
                     stroke-dasharray="calc(50 * 31.42 / 100) 31.42"
                     stroke-linecap="round"
-                    stroke-dashoffset="-${Math.floor((Math.random() + 50) * 100)}"
+                    stroke-dashoffset="-${Math.floor((Math.random() + 100) * 100)}"
             />
             
             <circle r="8" cx="10" cy="10" fill="rgba(45, 43, 57, 1)" /> 
@@ -259,25 +259,28 @@ const randomIntFromInterval = (min, max) => {
          */
         const source = new VectorSource();
 
+        const radius = getRandomInt(20,100)
+        const blur = radius
+
         const heatmap = new HeatmapLayer({
             source: source,
-            blur: 70,
-            radius: getRandomInt(40,100),
+            blur: blur,
+            radius: radius,
             weight: (feature) => {
                 // const name = feature.get('name');
                 // const magnitude = parseFloat(name.substr(2));
                 // return Math.random();
             },
             gradient: colors,
-            opacity: 0.95,
+            opacity: 0.9,
             // extent: clipVectorLayer.getSource().getExtent(),
             declutter: true,
             // maxResolution: 100,
             // minResolution: 1,
         });
 
-        for (let i = 0; i < 30; i++) {
-            const point = new Point(fromLonLat([getRandomFloat(36.896666, 36.898), getRandomFloat(55.2, 54.9)]));
+        for (let i = 0; i < Math.floor(Math.random()*30); i++) {
+            const point = new Point(fromLonLat([getRandomFloat(37.20, 36.9), getRandomFloat(55.5, 54.87)]));
             const pointFeature = new Feature({
                 geometry: point,
                 weight: getRandomFloat(0.5, 1),
