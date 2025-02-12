@@ -2,7 +2,7 @@ import './style.css';
 import {Feature, Map, View} from 'ol';
 import TileLayer from 'ol/layer/Tile.js';
 import OSM from 'ol/source/OSM';
-// import StadiaMaps from 'ol/source/StadiaMaps';
+import StadiaMaps from 'ol/source/StadiaMaps';
 import VectorSource from 'ol/source/Vector';
 import {fromLonLat, toLonLat} from "ol/proj";
 import GeoJSON from 'ol/format/GeoJSON';
@@ -259,31 +259,31 @@ const randomIntFromInterval = (min, max) => {
          */
         const source = new VectorSource();
 
-        const radius = getRandomInt(20,100)
+        const radius = getRandomInt(40,100)
         const blur = radius
 
         const heatmap = new HeatmapLayer({
             source: source,
             blur: blur,
             radius: radius,
-            weight: (feature) => {
-                // const name = feature.get('name');
-                // const magnitude = parseFloat(name.substr(2));
-                // return Math.random();
-            },
+            // weight: (feature) => {
+            //     // const name = feature.get('name');
+            //     // const magnitude = parseFloat(name.substr(2));
+            //     return Math.random();
+            // },
             gradient: colors,
-            opacity: 0.9,
-            // extent: clipVectorLayer.getSource().getExtent(),
+            opacity: 1,
+            // extent: [0,0,0,0],
             declutter: true,
             // maxResolution: 100,
             // minResolution: 1,
         });
 
-        for (let i = 0; i < Math.floor(Math.random()*30); i++) {
+        for (let i = 0; i < Math.floor(Math.random()*80); i++) {
             const point = new Point(fromLonLat([getRandomFloat(37.20, 36.9), getRandomFloat(55.5, 54.87)]));
             const pointFeature = new Feature({
                 geometry: point,
-                weight: getRandomFloat(0.5, 1),
+                weight: getRandomFloat(0.2, 1),
             });
 
             source.addFeature(pointFeature)
@@ -361,13 +361,13 @@ const randomIntFromInterval = (min, max) => {
          * создание базового тайла (вся карта мира, но без карты Москвы)
          * @type {TileLayer<StadiaMaps>}
          */
-        // const baseTileStadia = new TileLayer({
-        //     source: new StadiaMaps({
-        //         layer: 'alidade_smooth_dark',
-        //         retina: true,
-        //     }),
-        //     background: 'none',
-        // });
+        const baseTileStadia = new TileLayer({
+            source: new StadiaMaps({
+                layer: 'alidade_smooth_dark',
+                retina: true,
+            }),
+            background: 'none',
+        });
 
         /**
          * создание обрезанного тайла (только карта Москвы)
@@ -382,13 +382,13 @@ const randomIntFromInterval = (min, max) => {
         //  * создание обрезанного тайла (только карта Москвы)
         //  * @type {TileLayer<StadiaMaps>}
         //  */
-        // const clipTileStadia = new TileLayer({
-        //     source: new StadiaMaps({
-        //         layer: 'alidade_smooth_dark',
-        //         retina: true,
-        //     }),
-        //     background: 'none',
-        // });
+        const clipTileStadia = new TileLayer({
+            source: new StadiaMaps({
+                layer: 'alidade_smooth_dark',
+                retina: true,
+            }),
+            background: 'none',
+        });
 
 
         if((window.type === 1) || (window.type === 3) || (window.type === 5)) {
@@ -501,6 +501,30 @@ const randomIntFromInterval = (min, max) => {
             e.context.globalCompositeOperation = 'source-over';
         });
 
+        /**
+         * обрезка базового тайла (вырезание из карты города Москва)
+         */
+        baseTileStadia.on('postrender', function (e) {
+            const vectorContext = getVectorContext(e);
+            e.context.globalCompositeOperation = 'destination-out';
+            clipVectorLayer.getSource().forEachFeature(function (feature) {
+                vectorContext.drawFeature(feature, style);
+            });
+            e.context.globalCompositeOperation = 'source-over';
+        });
+
+        /**
+         * обрезка обрезанного тайла (вырезание всей карты - оставляем только Москву)
+         */
+        clipTileStadia.on('postrender', function (e) {
+            const vectorContext = getVectorContext(e);
+            e.context.globalCompositeOperation = 'destination-in';
+            clipVectorLayer.getSource().forEachFeature(function (feature) {
+                vectorContext.drawFeature(feature, style);
+            });
+            e.context.globalCompositeOperation = 'source-over';
+        });
+
         // idwImageLayer.on('postrender', function (e) {
         //     const vectorContext = getVectorContext(e);
         //     e.context.globalCompositeOperation = 'destination-in';
@@ -549,6 +573,14 @@ const randomIntFromInterval = (min, max) => {
                         clipTile,
                         idwImageLayer,
                         baseTile,
+                        districtsVectorLayer,
+                        clipVectorLayer,
+                    ]
+                case 6:
+                    return [
+                        clipTileStadia,
+                        ...heatmaps,
+                        baseTileStadia,
                         districtsVectorLayer,
                         clipVectorLayer,
                     ]
