@@ -24,6 +24,7 @@ export default {
         example3: resolve(__dirname, 'example3.html'),
         example4: resolve(__dirname, 'example4.html'),
         example5: resolve(__dirname, 'example5.html'),
+        example6: resolve(__dirname, 'example6.html'),
       }
     },
     sourcemap: true,
