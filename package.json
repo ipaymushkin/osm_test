@@ -14,7 +14,7 @@
   "dependencies": {
     "lodash": "^4.17.21",
     "ol": "latest",
-    "ol-ext": "4.0.26",
+    "ol-ext": "4.0.27",
     "tweakpane": "^4.0.5",
     "yy-fps": "2.0.1"
   }
