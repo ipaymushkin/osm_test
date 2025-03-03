@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "vite": "^6.0.9",
-    "vite-plugin-static-copy": "^2.2.0"
+    "vite-plugin-static-copy": "^2.3.0"
   },
   "dependencies": {
     "lodash": "^4.17.21",
